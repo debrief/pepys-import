@@ -5,7 +5,7 @@ SYSTEM = platform.system()
 if SYSTEM == "Linux":
     PLATFORM_EXTENSION_PATH = "mod_spatialite"
 elif SYSTEM == "Darwin":  # Darwin is MacOS  pragma: no cover (tests only run on Linux)
-    PLATFORM_EXTENSION_PATH = "/usr/local/lib/mod_spatialite.dylib"
+    PLATFORM_EXTENSION_PATH = "mod_spatialite"
 elif SYSTEM == "Windows":  # pragma: no cover (tests only run on Linux)
     PLATFORM_EXTENSION_PATH = "mod_spatialite"
 

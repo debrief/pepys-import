@@ -30,6 +30,15 @@ class HighlightedFile:
 
         self.importer_highlighting_levels = {}
 
+    def reinitialise(self, filename, datafile):
+        """Re-initialise the highlighted file object, to set a new filename as the source
+        of data to be highlighted.
+
+        Designed to be called with a new filename from within `_load_this_file` in an importer
+        if the original file needs transforming before being processed and highlighted."""
+        self.__init__(filename=filename, datafile=datafile)
+        self.datafile = datafile
+
     def chars_debug(self):
         """
         Debug method, to check contents of chars

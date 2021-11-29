@@ -111,6 +111,7 @@ def process(
             db_name=config.DB_NAME,
             db_type=config.DB_TYPE,
             missing_data_resolver=resolver_obj,
+            error_on_db_version_mismatch=True,
         )
     elif type(db) is dict:
         data_store = DataStore(
@@ -121,6 +122,7 @@ def process(
             db_name=db["name"],
             db_type=db["type"],
             missing_data_resolver=resolver_obj,
+            error_on_db_version_mismatch=True,
         )
     else:
         data_store = DataStore(
@@ -131,6 +133,7 @@ def process(
             db_name=db,
             db_type="sqlite",
             missing_data_resolver=resolver_obj,
+            error_on_db_version_mismatch=True,
         )
     if not is_schema_created(data_store.engine, data_store.db_type):
         # The number of tables don't match the expected number of tables, so check

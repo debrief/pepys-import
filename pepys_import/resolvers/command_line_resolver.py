@@ -1,13 +1,15 @@
 import sys
+import uuid
 
 from prompt_toolkit import prompt
-from prompt_toolkit.validation import Validator
+from prompt_toolkit.validation import ValidationError, Validator
 from tabulate import tabulate
 
 from pepys_import.core.store.constants import NATIONALITY, PLATFORM, PRIVACY
 from pepys_import.resolvers import constants
 from pepys_import.resolvers.command_line_input import create_menu, get_fuzzy_completer, is_valid
 from pepys_import.resolvers.data_resolver import DataResolver
+from pepys_import.utils.sqlalchemy_utils import get_lowest_privacy
 from pepys_import.utils.text_formatting_utils import (
     custom_print_formatted_text,
     format_command,
@@ -27,6 +29,9 @@ numeric_validator = Validator.from_callable(
 
 
 class CommandLineResolver(DataResolver):
+    def __init__(self):
+        self.store_all_platforms_as_unknown = False
+
     def resolve_datafile(self, data_store, datafile_name, datafile_type, privacy, change_id):
         """
         This method resolves datafile type and privacy. It asks user whether to create
@@ -120,11 +125,27 @@ class CommandLineResolver(DataResolver):
             sys.exit(1)
 
     def resolve_platform(
-        self, data_store, platform_name, identifier, platform_type, nationality, privacy, change_id
+        self,
+        data_store,
+        platform_name,
+        identifier,
+        platform_type,
+        nationality,
+        privacy,
+        change_id,
+        quadgraph=None,
     ):
+        if self.store_all_platforms_as_unknown:
+            return self.add_unknown_platform(data_store, platform_name, change_id)
+
         print_new_section_title("Resolve Platform")
         platform_details = []
-        final_options = ["Add a new platform", "Search for existing platform"]
+        final_options = [
+            "Add a new platform",
+            "Search for existing platform",
+            "Store as Unknown platform",
+            "Store remaining platforms in this datafile as Unknown",
+        ]
         if platform_name:
             # If we've got a platform_name, then we can search for all platforms
             # with this name, and present a list to the user to choose from,
@@ -192,10 +213,42 @@ class CommandLineResolver(DataResolver):
                 privacy,
                 change_id,
             )
-        elif 3 <= int(choice) <= len(choices):
+        elif choice == str(3):
+            return self.add_unknown_platform(data_store, platform_name, change_id)
+        elif choice == str(4):
+            self.store_all_platforms_as_unknown = True
+            return self.add_unknown_platform(data_store, platform_name, change_id)
+        elif 5 <= int(choice) <= len(choices):
             # One of the pre-existing platforms was chosen
-            platform_index = int(choice) - 3
+            platform_index = int(choice) - 5
             return platforms[platform_index]
+
+    def add_unknown_platform(self, data_store, platform_name, change_id):
+        if platform_name is None:
+            platform_name = str(uuid.uuid4())
+        identifier = platform_name
+        trigraph = platform_name[:3]
+        quadgraph = platform_name[:4]
+
+        chosen_platform_type = data_store.add_to_platform_types(
+            "Unknown", change_id, default_data_interval_secs=60
+        )
+
+        chosen_nationality = data_store.add_to_nationalities("Unknown", change_id)
+        chosen_privacy = data_store.search_privacy(get_lowest_privacy(data_store))
+
+        return (
+            platform_name,
+            trigraph,
+            quadgraph,
+            identifier,
+            chosen_platform_type,
+            chosen_nationality,
+            chosen_privacy,
+        )
+
+    def reset_per_file_settings(self):
+        self.store_all_platforms_as_unknown = False
 
     def resolve_sensor(self, data_store, sensor_name, sensor_type, host_id, privacy, change_id):
         print_new_section_title("Resolve Sensor")
@@ -377,6 +430,26 @@ class CommandLineResolver(DataResolver):
             selected_object = objects_dict[options[int(choice) - 1]]
             if selected_object:
                 return selected_object
+
+    def resolve_missing_info(
+        self, question, default_value, min_value=None, max_value=None, allow_empty=False
+    ):
+        question_to_ask = question
+        if allow_empty is True:
+            question_to_ask += f" (Default: {default_value})"
+        if isinstance(default_value, int):
+            # Apply some validation if int expected
+            info = prompt(
+                format_command(question_to_ask),
+                validator=MinMaxValidator(min_value, max_value, allow_empty),
+            )
+        else:
+            # Assume caller to validate if not number
+            info = prompt(format_command(question_to_ask))
+        if info is None or info == "":
+            print(f"Using default value: {default_value}")
+            info = default_value
+        return info
 
     def fuzzy_search_reference(
         self,
@@ -1024,3 +1097,30 @@ class CommandLineResolver(DataResolver):
         elif choice == ".":
             print("-" * 60, "\nReturning to the previous menu\n")
             return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)
+
+
+class MinMaxValidator(Validator):
+    """A validator to check numerical values are between a given minimum/maximum value"""
+
+    def __init__(self, minimum=None, maximum=None, allow_empty=False):
+        """Creates a new validator to check numerical values between two values
+        :param minimum: The minimum value (inclusive) allowed by the validator
+        :param maximum: The maximum value (inclusive) allowed by the validator
+        :param allow_empty: Whether we allow an empty string to be parsed
+        """
+        self.min = minimum
+        self.max = maximum
+        self.allow_empty = allow_empty
+
+    def validate(self, document):
+        to_validate = document.text
+        if is_number(to_validate):
+            number = int(to_validate)
+            if self.min and number < self.min:
+                raise ValidationError(len(document.text), f"Number must be {self.min} or higher")
+            if self.max and number > self.max:
+                raise ValidationError(len(document.text), f"Number must be {self.max} or lower")
+        elif self.allow_empty is True and to_validate == "":
+            pass
+        else:
+            raise ValidationError(len(document.text), "This input contains non-numeric characters")

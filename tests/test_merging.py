@@ -2160,7 +2160,7 @@ class TestExportAlterAndMerge(unittest.TestCase):
         new_default_resolver.default_trigraph = "SL1"
         new_default_resolver.default_quadgraph = "SLT1"
         new_default_resolver.default_identifier = "123-SLAVE"
-        new_default_resolver.default_platform_type = "Warship-SLAVE"
+        new_default_resolver.default_platform_type = "Naval - frigate-SLAVE"
         new_default_resolver.default_nationality = "UK-SLAVE"
         new_default_resolver.default_sensor_name = "SENSOR-1-SLAVE"
         new_default_resolver.default_sensor_type = "Position-SLAVE"
@@ -2199,10 +2199,10 @@ class TestExportAlterAndMerge(unittest.TestCase):
             self.master_store.add_to_platform_types("Shared_PT_1", change_id=change_id)
 
             m_plat_1 = self.master_store.add_to_platforms(
-                "Master_Platform_1", "123", "UK", "Warship", "Public", change_id=change_id
+                "Master_Platform_1", "123", "UK", "Naval - frigate", "Public", change_id=change_id
             )
             shared_plat_1 = self.master_store.add_to_platforms(
-                "Shared_Platform_1", "234", "UK", "Warship", "Public", change_id=change_id
+                "Shared_Platform_1", "234", "UK", "Naval - frigate", "Public", change_id=change_id
             )
 
             self.master_store.add_to_synonyms(
@@ -2229,13 +2229,13 @@ class TestExportAlterAndMerge(unittest.TestCase):
             self.slave_store.add_to_platform_types("Shared_PT_1", change_id=change_id)
 
             s_plat_1 = self.slave_store.add_to_platforms(
-                "Slave_Platform_1", "123", "UK", "Warship", "Public", change_id=change_id
+                "Slave_Platform_1", "123", "UK", "Naval - frigate", "Public", change_id=change_id
             )
             shared_plat_1 = self.slave_store.add_to_platforms(
                 "Shared_Platform_1",
                 "234",
                 "UK",
-                "Warship",
+                "Naval - frigate",
                 "Public",
                 trigraph="P12",
                 change_id=change_id,
@@ -2281,7 +2281,7 @@ class TestExportAlterAndMerge(unittest.TestCase):
         # Check statistics
         assert "| Nationality        |                 1 |       1 |          0 |" in output
         assert "| PlatformType       |                 1 |       2 |          0 |" in output
-        assert "| Datafiles          |                 0 |       1 |          0 |" in output
+        assert "| Datafiles          |                 2 |       1 |          0 |" in output
         assert "| Platform           |                 4 |       2 |          1 |" in output
         assert "| Sensor             |                 5 |       1 |          0 |" in output
         assert "| State       |     402 |" in output
@@ -2291,7 +2291,7 @@ class TestExportAlterAndMerge(unittest.TestCase):
         assert "  - uk_track.rep" in output
         assert "  - UK-SLAVE" in output
         assert "  - SPLENDID" in output
-        assert "  - Warship-SLAVE" in output
+        assert "  - Naval - frigate-SLAVE" in output
         assert "  - PRIVACY-1-SLAVE" in output
         assert "  - Slave_Platform_1_Synonym" in output
 
@@ -2462,7 +2462,7 @@ class TestExportAlterAndMerge_Postgres(unittest.TestCase):
         new_default_resolver.default_trigraph = "SL1"
         new_default_resolver.default_quadgraph = "SLT1"
         new_default_resolver.default_identifier = "123-SLAVE"
-        new_default_resolver.default_platform_type = "Warship-SLAVE"
+        new_default_resolver.default_platform_type = "Naval - frigate-SLAVE"
         new_default_resolver.default_nationality = "UK-SLAVE"
         new_default_resolver.default_sensor_name = "SENSOR-1-SLAVE"
         new_default_resolver.default_sensor_type = "Position-SLAVE"
@@ -2501,10 +2501,10 @@ class TestExportAlterAndMerge_Postgres(unittest.TestCase):
             self.master_store.add_to_platform_types("Shared_PT_1", change_id=change_id)
 
             m_plat_1 = self.master_store.add_to_platforms(
-                "Master_Platform_1", "123", "UK", "Warship", "Public", change_id=change_id
+                "Master_Platform_1", "123", "UK", "Naval - frigate", "Public", change_id=change_id
             )
             shared_plat_1 = self.master_store.add_to_platforms(
-                "Shared_Platform_1", "234", "UK", "Warship", "Public", change_id=change_id
+                "Shared_Platform_1", "234", "UK", "Naval - frigate", "Public", change_id=change_id
             )
 
             self.master_store.add_to_synonyms(
@@ -2531,10 +2531,10 @@ class TestExportAlterAndMerge_Postgres(unittest.TestCase):
             self.slave_store.add_to_platform_types("Shared_PT_1", change_id=change_id)
 
             s_plat_1 = self.slave_store.add_to_platforms(
-                "Slave_Platform_1", "123", "UK", "Warship", "Public", change_id=change_id
+                "Slave_Platform_1", "123", "UK", "Naval - frigate", "Public", change_id=change_id
             )
             shared_plat_1 = self.slave_store.add_to_platforms(
-                "Shared_Platform_1", "234", "UK", "Warship", "Public", change_id=change_id
+                "Shared_Platform_1", "234", "UK", "Naval - frigate", "Public", change_id=change_id
             )
 
             self.slave_store.add_to_synonyms(

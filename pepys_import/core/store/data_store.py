@@ -1,6 +1,7 @@
 import csv
 import os
 import sys
+import uuid
 from contextlib import contextmanager
 from datetime import datetime
 from getpass import getuser
@@ -17,6 +18,7 @@ from sqlalchemy.sql.expression import text
 from sqlalchemy_utils import dependent_objects, get_referencing_foreign_keys, merge_references
 
 from paths import MIGRATIONS_DIRECTORY, PEPYS_IMPORT_DIRECTORY
+from pepys_admin.utils import read_latest_revisions_file
 from pepys_import import __build_timestamp__, __version__
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
@@ -39,7 +41,11 @@ from pepys_import.utils.sqlite_utils import load_spatialite, set_sqlite_foreign_
 from pepys_import.utils.value_transforming_utils import format_datetime
 
 from ...utils.error_handling import handle_database_errors, handle_first_connection_error
-from ...utils.sqlalchemy_utils import get_primary_key_for_table, sqlalchemy_object_to_json
+from ...utils.sqlalchemy_utils import (
+    get_lowest_privacy,
+    get_primary_key_for_table,
+    sqlalchemy_object_to_json,
+)
 from ...utils.table_name_utils import table_name_to_class_name
 from ...utils.text_formatting_utils import custom_print_formatted_text, format_error_message
 from .db_base import BasePostGIS, BaseSpatiaLite
@@ -80,11 +86,13 @@ class DataStore:
         missing_data_resolver=DefaultResolver(),
         welcome_text="Pepys_import",
         show_status=True,
+        error_on_db_version_mismatch=False,
     ):
 
         self.missing_data_resolver = missing_data_resolver
         self.welcome_text = welcome_text
         self.show_status = show_status
+        self.error_on_db_version_mismatch = error_on_db_version_mismatch
 
         # TEMP list of values for defaulted IDs, to be replaced by missing info lookup mechanism
         self.default_user_id = 1  # DevUser
@@ -142,6 +150,8 @@ class DataStore:
         # setup meta_class data
         self.meta_classes = {}
         self.setup_table_type_mapping()
+
+        self.latest_revisions = read_latest_revisions_file()
 
         if db_name == ":memory:":
             self.in_memory_database = True
@@ -210,9 +220,9 @@ class DataStore:
             show_software_meta_info(
                 __version__, __build_timestamp__, self.db_type, self.db_name, db_host
             )
-            # The 'pepys-import' banner is 61 characters wide, so making a line
+            # The 'pepys-import' banner is 78 characters wide, so making a line
             # of the same length makes things prettier
-            print("-" * 61)
+            print("-" * 78)
 
     def initialise(self):
         """Create schemas for the database"""
@@ -365,7 +375,23 @@ class DataStore:
 
                 # Database has been found and is the correct length
                 if table_contents[0][0] in revision_list:
-                    # The returned contents is found in our list of ID's so we can return out of the function and carry on
+                    if self.db_type == "sqlite":
+                        key_name = "LATEST_SQLITE_VERSION"
+                    else:
+                        key_name = "LATEST_POSTGRES_VERSION"
+
+                    if table_contents[0][0] != self.latest_revisions[key_name]:
+                        if self.error_on_db_version_mismatch:
+                            print(
+                                "ERROR: The database is not at the latest revision. Please ask an administrator to run the database migration."
+                            )
+                            sys.exit(1)
+                        else:
+                            print("*" * 78)
+                            print(
+                                "WARNING: The database is not at the latest revision.\nPlease ask an administrator to run the database migration."
+                            )
+                            print("*" * 78)
                     return
                 else:
                     # The returned contents is not found in our list of ID's so we need to have an error
@@ -966,6 +992,7 @@ class DataStore:
         trigraph=None,
         quadgraph=None,
         change_id=None,
+        unknown=False,
     ):
         """
         Adds an entry to the platforms table for the specified platform
@@ -987,8 +1014,47 @@ class DataStore:
         :type identifier: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
+        :param unknown: Whether to create this as an 'unknown' Platform, which won't ask
+                        the user to resolve details, and will assign Unknown nationality
+                        and Platform Types
+        :type unknown: Boolean
         :return: Created Platform entity
         """
+        if unknown:
+            # The importer has specifically said it wants to get a 'unknown platform' (ie. one with an unknown
+            # nationality and platform type) back from this call.
+            if platform_name is not None:
+                # The importer has provided a name, which we assume means they think this name is unique
+                # (like an IMO ID), so we search for this name and return it if it exists
+                # We'll use the first three characters of the platform name as the identifier - as this will have been used
+                # when the unknown platform was automatically created
+                platform = self.find_platform(
+                    name=platform_name, identifier=platform_name, nationality="Unknown"
+                )
+                # If we found a platform with that name etc, then return it
+                if platform:
+                    return platform
+            else:
+                # If we haven't been given a name, make up a UUID name
+                platform_name = str(uuid.uuid4())
+
+            chosen_platform_type = self.add_to_platform_types(
+                "Unknown", change_id, default_data_interval_secs=60
+            )
+
+            chosen_nationality = self.add_to_nationalities("Unknown", change_id)
+
+            lowest_privacy = get_lowest_privacy(self)
+            return self.add_to_platforms(
+                name=platform_name,
+                trigraph=platform_name[:3],
+                quadgraph=platform_name[:4],
+                identifier=platform_name,
+                nationality=chosen_nationality.name,
+                platform_type=chosen_platform_type.name,
+                privacy=lowest_privacy,
+                change_id=change_id,
+            )
 
         # Check for name match in existing Platforms
         # If identifier and nationality are None then this just searches synonyms
@@ -1012,7 +1078,14 @@ class DataStore:
             or privacy_obj is None
         ):
             resolved_data = self.missing_data_resolver.resolve_platform(
-                self, platform_name, identifier, platform_type, nationality, privacy, change_id
+                self,
+                platform_name,
+                identifier,
+                platform_type,
+                nationality,
+                privacy,
+                change_id,
+                quadgraph,
             )
             # It means that new platform added as a synonym and existing platform returned
             if isinstance(resolved_data, self.db_classes.Platform):
@@ -1046,6 +1119,17 @@ class DataStore:
             privacy=privacy_obj.name,
             change_id=change_id,
         )
+
+    def get_platform_name_from_quad(self, quadgraph):
+        platform = (
+            self.session.query(self.db_classes.Platform)
+            .filter(func.lower(self.db_classes.Platform.quadgraph) == lowercase_or_none(quadgraph))
+            .first()
+        )
+
+        if platform is not None:
+            return platform.name
+        return None
 
     def get_status(
         self,
@@ -2492,3 +2576,19 @@ class DataStore:
             writer.writerow(headers)
             writer.writerows(entries)
             file.close()
+
+    def ask_for_missing_info(
+        self, question, default_value, min_value=None, max_value=None, allow_empty=False
+    ):
+        """Requests any missing information that isn't stored in the database
+        e.g. missing date/time info
+        :param question: The question to ask the resolver
+        :param default_value: The default value to use if unresolved
+        :param min_value: The minimum value allowed for the result, optional
+        :param max_value: The maximum value allowed for the result, optional
+        :param allow_empty: Whether to allow an empty input (for accepting defaults), optional
+        :return: The missing information requested
+        """
+        return self.missing_data_resolver.resolve_missing_info(
+            question, default_value, min_value, max_value, allow_empty
+        )

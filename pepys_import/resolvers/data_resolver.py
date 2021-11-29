@@ -4,7 +4,15 @@ from abc import ABC, abstractmethod
 class DataResolver(ABC):
     @abstractmethod
     def resolve_platform(
-        self, data_store, platform_name, identifier, platform_type, nationality, privacy, change_id
+        self,
+        data_store,
+        platform_name,
+        identifier,
+        platform_type,
+        nationality,
+        privacy,
+        change_id,
+        quadgraph=None,
     ):
         """
         Implementation method should return any data necessary to create a platform.
@@ -22,6 +30,8 @@ class DataResolver(ABC):
         :type privacy: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: UUID
+        :param quadgraph: The quadgraph that the platform is known by
+        :type quadgraph: String
         :return:
         """
 
@@ -64,3 +74,24 @@ class DataResolver(ABC):
         :type change_id: UUID
         :return:
         """
+
+    @abstractmethod
+    def resolve_missing_info(
+        self, question, default_value, min_value=None, max_value=None, allow_empty=False
+    ):
+        """Implementation method should return the data for the given property name
+        as asked for in the question
+
+        :param property_name: The name of the property asked for
+        :param question: The question to resolve
+        :param default_value: The default value to use if unresolved
+        :param min_value: The minimum value allowed for the result, optional
+        :param max_value: The maximum value allowed for the result, optional
+        :param allow_empty: Whether to allow an empty value (e.g. to accept default), optional
+        :return: The missing information requested
+        """
+
+    @abstractmethod
+    def reset_per_file_settings(self):
+        """Implementation method should do anything needed to reset per-file settings,
+        such as whether to treat all platforms as unknown."""

@@ -119,7 +119,7 @@ class DefaultResolverTestCase(unittest.TestCase):
             self.assertEqual(trigraph, "PL1")
             self.assertEqual(quadgraph, "PLT1")
             self.assertEqual(identifier, "123")
-            self.assertEqual(platform_type.name, "Warship")
+            self.assertEqual(platform_type.name, "Naval - frigate")
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "Public")
 
@@ -184,6 +184,13 @@ class DefaultResolverTestCase(unittest.TestCase):
             self.assertEqual(datafile_name, "DATAFILE-1")
             self.assertEqual(datafile_type.name, "DATAFILE-TYPE-1")
             self.assertEqual(privacy.name, "Public")
+
+    def test_resolve_missing_info(self):
+        info_str = self.resolver.resolve_missing_info("Test question?", "DEFAULT")
+        self.assertEqual(info_str, "DEFAULT")
+
+        info_int = self.resolver.resolve_missing_info("The Question", 10)
+        self.assertEqual(info_int, 10)
 
 
 class DefaultResolverTestCaseWithNoRefLoaded(unittest.TestCase):

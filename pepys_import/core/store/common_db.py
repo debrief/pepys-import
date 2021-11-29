@@ -1,3 +1,5 @@
+import uuid
+
 from prompt_toolkit import prompt
 from prompt_toolkit.validation import Validator
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -15,7 +17,7 @@ from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
 from pepys_import.utils.data_store_utils import chunked_list, shorten_uuid
 from pepys_import.utils.import_utils import import_validators
-from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
+from pepys_import.utils.sqlalchemy_utils import get_lowest_privacy, get_primary_key_for_table
 from pepys_import.utils.text_formatting_utils import format_error_menu
 
 LOCAL_BASIC_VALIDATORS = []
@@ -160,6 +162,10 @@ class PlatformMixin:
         return association_proxy("participations", "wargame_name")
 
     @declared_attr
+    def wargame_participations_objects(self):
+        return association_proxy("participations", "wargame")
+
+    @declared_attr
     def platform_type(self):
         return relationship("PlatformType", lazy="joined", innerjoin=True, uselist=False)
 
@@ -221,6 +227,41 @@ class PlatformMixin:
         sensor_type_obj = data_store.search_sensor_type(sensor_type)
         privacy_obj = data_store.search_privacy(privacy)
         if sensor_type_obj is None or privacy_obj is None:
+            # We don't have access to the platform type attribute on self
+            # as it has been expunged by now, so query the database and check it
+            platform = (
+                data_store.session.query(data_store.db_classes.Platform)
+                .filter(data_store.db_classes.Platform.platform_id == self.platform_id)
+                .one()
+            )
+            platform_type_name = platform.platform_type_name
+            if platform_type_name == "Unknown":
+                # If we're dealing with an unknown Platform, then don't ask the user for
+                # sensor details, just create them with whatever information we've got
+                # and use UUIDs/Unknown for the missing bits
+                if sensor_name is None:
+                    sensor_name = str(uuid.uuid4())
+
+                if sensor_type_obj is None:
+                    sensor_type = "Unknown"
+                else:
+                    sensor_type = sensor_type_obj.name
+
+                if privacy_obj is None:
+                    privacy = get_lowest_privacy(data_store)
+                else:
+                    privacy = privacy_obj.name
+
+                return data_store.add_to_sensors(
+                    name=sensor_name,
+                    sensor_type=sensor_type,
+                    host_name=None,
+                    host_nationality=None,
+                    host_identifier=None,
+                    host_id=self.platform_id,
+                    privacy=privacy,
+                    change_id=change_id,
+                )
             resolved_data = data_store.missing_data_resolver.resolve_sensor(
                 data_store, sensor_name, sensor_type, self.platform_id, privacy, change_id
             )
@@ -1891,6 +1932,10 @@ class ActivationMixin:
     @declared_attr
     def source(self):
         return relationship("Datafile", lazy="joined", uselist=False)
+
+    @declared_attr
+    def platform_id(self):
+        return association_proxy("sensor", "host")
 
     # @declared_attr
     # def source_reference(self):

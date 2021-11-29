@@ -211,10 +211,14 @@
 
 		<!-- This has to stay here for templating -->
 		<script type="text/javascript">
+			function platformTypeToIcon(platformType) {
+			  return platformType.replaceAll('-', '').replaceAll('_', '').replaceAll(/\s+/g,"_").toLowerCase();
+			}
 			function getParticipantIconUrl(participant) {
 				return "{{ url_for('static', filename='image/PLATFORM_TYPE.svg') }}".replace(
-					"PLATFORM_TYPE", participant["platform-type"]
-				);
+						"PLATFORM_TYPE",
+						platformTypeToIcon(participant["platform-type"])
+					);
 			}
 		</script>
 

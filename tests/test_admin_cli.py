@@ -965,15 +965,13 @@ class SnapshotPostgresTestCase(unittest.TestCase):
     def test_do_export_reference_data_postgres(self, patched_input):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data()
         output = temp_output.getvalue()
-        assert "Reference tables are successfully exported!" in output
+        assert "Reference tables successfully exported!" in output
 
         connection = sqlite3.connect("test.db")
         results = connection.execute("SELECT name FROM DatafileTypes;")
@@ -983,24 +981,20 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         assert "GPX" in names
         connection.close()
 
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
 
     @patch("pepys_admin.snapshot_cli.ptk_prompt", return_value="test.db")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public", "Public Sensitive"])
     def test_do_export_reference_data_and_metadata_postgres(self, patched_iterfzf, patched_input):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
         output = temp_output.getvalue()
-        assert "Reference and metadata tables are successfully exported!" in output
+        assert "Reference and metadata tables successfully exported!" in output
 
         connection = sqlite3.connect("test.db")
         results = connection.execute("SELECT name FROM SensorTypes;")
@@ -1024,24 +1018,20 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         assert "test" in table_dict.values()
         connection.close()
 
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
 
     @patch("pepys_admin.snapshot_cli.ptk_prompt", return_value="test.db")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public"])
     def test_do_export_reference_data_and_metadata_public(self, patched_iterfzf, patched_input):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
         output = temp_output.getvalue()
-        assert "Reference and metadata tables are successfully exported!" in output
+        assert "Reference and metadata tables successfully exported!" in output
 
         connection = sqlite3.connect("test.db")
         results = connection.execute("SELECT name FROM SensorTypes;")
@@ -1067,9 +1057,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         assert "test-2" not in table_dict.values()
         connection.close()
 
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
 
     @patch("pepys_admin.snapshot_cli.ptk_prompt", return_value="test.db")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public Sensitive"])
@@ -1078,15 +1066,13 @@ class SnapshotPostgresTestCase(unittest.TestCase):
     ):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
         output = temp_output.getvalue()
-        assert "Reference and metadata tables are successfully exported!" in output
+        assert "Reference and metadata tables successfully exported!" in output
 
         connection = sqlite3.connect("test.db")
         results = connection.execute("SELECT name FROM SensorTypes;")
@@ -1102,9 +1088,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         assert len(results) == 0
         connection.close()
 
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
 
 
 class SnapshotShellMergingTestCase(unittest.TestCase):
@@ -1402,15 +1386,13 @@ class SnapshotShellTestCase(unittest.TestCase):
     def test_do_export_reference_data(self, patched_input):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data()
         output = temp_output.getvalue()
-        assert "Reference tables are successfully exported!" in output
+        assert "Reference tables successfully exported!" in output
 
         connection = sqlite3.connect("test.db")
         results = connection.execute("SELECT name FROM DatafileTypes;")
@@ -1420,18 +1402,14 @@ class SnapshotShellTestCase(unittest.TestCase):
         assert "GPX" in names
         connection.close()
 
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
 
     @patch("pepys_admin.snapshot_cli.custom_print_formatted_text", side_effect=side_effect)
     @patch("pepys_admin.snapshot_cli.ptk_prompt")
     def test_do_export_reference_data_invalid_filename(self, patched_input, patched_print):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
 
         with open("already_existing_file.db", "w") as f:
             f.write("Hello, world")
@@ -1443,7 +1421,7 @@ class SnapshotShellTestCase(unittest.TestCase):
         output = temp_output.getvalue()
 
         assert "There is already a file named 'already_existing_file.db'" in output
-        assert "Reference tables are successfully exported!" in output
+        assert "Reference tables successfully exported!" in output
 
         connection = sqlite3.connect("test.db")
         results = connection.execute("SELECT name FROM DatafileTypes;")
@@ -1453,9 +1431,7 @@ class SnapshotShellTestCase(unittest.TestCase):
         assert "GPX" in names
         connection.close()
 
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
 
         if os.path.exists("already_existing_file.db"):
             os.remove("already_existing_file.db")
@@ -1465,15 +1441,13 @@ class SnapshotShellTestCase(unittest.TestCase):
     def test_do_export_reference_data_and_metadata(self, patched_iterfzf, patched_input):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
         output = temp_output.getvalue()
-        assert "Reference and metadata tables are successfully exported!" in output
+        assert "Reference and metadata tables successfully exported!" in output
 
         connection = sqlite3.connect("test.db")
         results = connection.execute("SELECT name FROM SensorTypes;")
@@ -1497,24 +1471,20 @@ class SnapshotShellTestCase(unittest.TestCase):
         assert "test" in table_dict.values()
         connection.close()
 
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
 
     @patch("pepys_admin.snapshot_cli.ptk_prompt", return_value="test.db")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public"])
     def test_do_export_reference_data_and_metadata_public(self, patched_iterfzf, patched_input):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
         output = temp_output.getvalue()
-        assert "Reference and metadata tables are successfully exported!" in output
+        assert "Reference and metadata tables successfully exported!" in output
 
         connection = sqlite3.connect("test.db")
         results = connection.execute("SELECT name FROM SensorTypes;")
@@ -1540,9 +1510,7 @@ class SnapshotShellTestCase(unittest.TestCase):
         assert "test-2" not in table_dict.values()
         connection.close()
 
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
 
     @patch("pepys_admin.snapshot_cli.ptk_prompt", return_value="test.db")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public Sensitive"])
@@ -1551,15 +1519,13 @@ class SnapshotShellTestCase(unittest.TestCase):
     ):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
         output = temp_output.getvalue()
-        assert "Reference and metadata tables are successfully exported!" in output
+        assert "Reference and metadata tables successfully exported!" in output
 
         connection = sqlite3.connect("test.db")
         results = connection.execute("SELECT name FROM SensorTypes;")
@@ -1575,9 +1541,7 @@ class SnapshotShellTestCase(unittest.TestCase):
         assert len(results) == 0
         connection.close()
 
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
 
     def test_do_cancel(self):
         temp_output = StringIO()
@@ -1620,9 +1584,7 @@ class SnapshotShellTestCase(unittest.TestCase):
     def test_do_export_reference_and_metadata_cancelling(self, patched_iterfzf, patched_input):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -1630,9 +1592,218 @@ class SnapshotShellTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Returning to the previous menu" in output
 
-        path = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(path):
-            os.remove(path)
+        remove_file_if_exists("test.db")
+
+    @patch("pepys_admin.snapshot_cli.ptk_prompt", return_value="test.db")
+    def test_do_export_all_data(self, patched_ptkprompt):
+        remove_file_if_exists("test.db")
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export_all_data()
+        output = temp_output.getvalue()
+        assert "Data successfully exported" in output
+
+        remove_file_if_exists("test.db")
+
+    @patch("pepys_admin.snapshot_cli.ptk_prompt")
+    @patch("pepys_admin.snapshot_helpers.prompt")
+    @patch("pepys_admin.snapshot_cli.export_measurement_tables_filtered_by_time")
+    def test_do_export_all_data_filter_time(
+        self, patched_export, patched_prompt, patched_db_prompt
+    ):
+        remove_file_if_exists("test.db")
+
+        patched_prompt.side_effect = ["2000-01-01 00:00:00", "2005-05-25 00:00:00"]
+        patched_db_prompt.side_effect = ["test.db"]
+
+        self.shell.do_export_all_data_filter_time()
+
+        patched_export.assert_called_with(
+            ANY, ANY, datetime(2000, 1, 1, 0, 0), datetime(2005, 5, 25, 0, 0)
+        )
+
+        remove_file_if_exists("test.db")
+
+    @patch("pepys_admin.snapshot_cli.ptk_prompt")
+    @patch("pepys_admin.snapshot_helpers.prompt")
+    @patch("pepys_admin.snapshot_cli.export_measurement_tables_filtered_by_time")
+    def test_do_export_all_data_filter_time_invalid_type(
+        self, patched_export, patched_prompt, patched_db_prompt
+    ):
+        remove_file_if_exists("test.db")
+
+        patched_prompt.side_effect = ["abcd", "2000-01-01 00:00:00", "2005-05-25 00:00:00"]
+        patched_db_prompt.side_effect = ["test.db"]
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export_all_data_filter_time()
+        output = temp_output.getvalue()
+        assert "Invalid time entered, please try again" in output
+
+        patched_export.assert_called_with(
+            ANY, ANY, datetime(2000, 1, 1, 0, 0), datetime(2005, 5, 25, 0, 0)
+        )
+
+        remove_file_if_exists("test.db")
+
+    @patch("pepys_admin.snapshot_cli.ptk_prompt")
+    @patch("pepys_admin.snapshot_helpers.prompt")
+    @patch("pepys_admin.snapshot_cli.export_measurement_tables_filtered_by_time")
+    def test_do_export_all_data_filter_time_invalid_date(
+        self, patched_export, patched_prompt, patched_db_prompt
+    ):
+        remove_file_if_exists("test.db")
+
+        patched_prompt.side_effect = [
+            "2000-15-50 00:00:00",
+            "2000-01-01 00:00:00",
+            "2005-05-25 00:00:00",
+        ]
+        patched_db_prompt.side_effect = ["test.db"]
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export_all_data_filter_time()
+        output = temp_output.getvalue()
+        assert "Invalid time entered, please try again" in output
+
+        patched_export.assert_called_with(
+            ANY, ANY, datetime(2000, 1, 1, 0, 0), datetime(2005, 5, 25, 0, 0)
+        )
+
+        remove_file_if_exists("test.db")
+
+    @patch("pepys_admin.snapshot_cli.ptk_prompt")
+    @patch("pepys_admin.snapshot_helpers.prompt")
+    @patch("pepys_admin.snapshot_cli.export_measurement_tables_filtered_by_location")
+    def test_do_export_all_data_filter_location(
+        self, patched_export, patched_prompt, patched_db_prompt
+    ):
+        remove_file_if_exists("test.db")
+
+        patched_prompt.side_effect = ["0", "40", "-10", "10"]
+        patched_db_prompt.side_effect = ["test.db"]
+
+        self.shell.do_export_all_data_filter_location()
+
+        patched_export.assert_called_with(ANY, ANY, -10, 0, 10, 40)
+
+        remove_file_if_exists("test.db")
+
+    @patch("pepys_admin.snapshot_cli.ptk_prompt")
+    @patch("pepys_admin.snapshot_helpers.prompt")
+    @patch("pepys_admin.snapshot_cli.export_measurement_tables_filtered_by_location")
+    def test_do_export_all_data_filter_location_invalid(
+        self, patched_export, patched_prompt, patched_db_prompt
+    ):
+        remove_file_if_exists("test.db")
+
+        patched_prompt.side_effect = ["abc", "0", "40", "-10", "10"]
+        patched_db_prompt.side_effect = ["test.db"]
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export_all_data_filter_location()
+        output = temp_output.getvalue()
+        assert "Invalid number entered, please try again" in output
+
+        patched_export.assert_called_with(ANY, ANY, -10, 0, 10, 40)
+
+        remove_file_if_exists("test.db")
+
+    @patch("pepys_admin.snapshot_cli.ptk_prompt")
+    @patch("pepys_admin.snapshot_helpers.iterfzf")
+    @patch("pepys_admin.snapshot_cli.export_measurement_tables_filtered_by_wargame_participation")
+    def test_do_export_all_data_filter_wargame(
+        self, patched_export, patched_iterfzf, patched_db_prompt
+    ):
+        remove_file_if_exists("test.db")
+
+        with self.store.session_scope():
+            priv_id = self.store.session.query(self.store.db_classes.Privacy).all()[0].privacy_id
+            change_id = self.store.add_to_changes(
+                "USER", datetime.utcnow(), "Creating test tasks/participants"
+            ).change_id
+            s1 = self.store.db_classes.Series(name="Test Series", privacy_id=priv_id)
+
+            wg1 = self.store.db_classes.Wargame(
+                name="Test Wargame",
+                start=datetime(2000, 1, 1),
+                end=datetime(2000, 2, 1),
+                privacy_id=priv_id,
+            )
+            wg1.series = s1
+
+            self.store.session.add_all([s1, wg1])
+
+            plat1 = (
+                self.store.session.query(self.store.db_classes.Platform)
+                .filter(self.store.db_classes.Platform.name == "Test Platform")
+                .one()
+            )
+
+            wg1.add_participant(
+                data_store=self.store, platform=plat1, privacy="Private", change_id=change_id
+            )
+
+        patched_iterfzf.side_effect = ["Test Wargame"]
+        patched_db_prompt.side_effect = ["test.db"]
+
+        self.shell.do_export_all_data_filter_wargame_participation()
+
+        patched_export.assert_called_once()
+        assert patched_export.call_args[0][-1].name == "Test Wargame"
+
+        remove_file_if_exists("test.db")
+
+    @patch("pepys_admin.snapshot_cli.ptk_prompt")
+    @patch("pepys_admin.snapshot_cli.iterfzf")
+    @patch("pepys_admin.snapshot_helpers.iterfzf")
+    @patch("pepys_admin.snapshot_cli.export_measurement_tables_filtered_by_serial_participation")
+    def test_do_export_all_data_filter_serial(
+        self, patched_export, patched_iterfzf, patched_iterfzf2, patched_db_prompt
+    ):
+        remove_file_if_exists("test.db")
+
+        with self.store.session_scope():
+            priv_id = self.store.session.query(self.store.db_classes.Privacy).all()[0].privacy_id
+            s1 = self.store.db_classes.Series(name="Test Series", privacy_id=priv_id)
+
+            wg1 = self.store.db_classes.Wargame(
+                name="Test Wargame",
+                start=datetime(2000, 1, 1),
+                end=datetime(2000, 2, 1),
+                privacy_id=priv_id,
+            )
+            wg1.series = s1
+
+            self.store.session.add_all([s1, wg1])
+
+            serial1 = self.store.db_classes.Serial(
+                serial_number="Test Serial",
+                exercise="Test Exercise",
+                start=datetime(2000, 1, 5),
+                end=datetime(2000, 1, 10),
+                environment="Test Environment",
+                privacy_id=priv_id,
+            )
+
+            serial1.wargame = wg1
+
+            self.store.session.add(serial1)
+
+        patched_iterfzf.side_effect = ["Test Wargame"]
+        patched_iterfzf2.side_effect = ["Test Serial"]
+        patched_db_prompt.side_effect = ["test.db"]
+
+        self.shell.do_export_all_data_filter_serial_participation()
+
+        patched_export.assert_called_once()
+        assert patched_export.call_args[0][-1].serial_number == "Test Serial"
+
+        remove_file_if_exists("test.db")
 
 
 @patch("pepys_admin.base_cli.custom_print_formatted_text")
@@ -1756,6 +1927,12 @@ def test_viewer_mode_valid_db(patched_vs):
     run_shell(path=".", db="created_db.db", training=False, viewer=True)
 
     patched_vs.assert_called()
+
+
+def remove_file_if_exists(filename):
+    path = os.path.join(CURRENT_DIR, filename)
+    if os.path.exists(path):
+        os.remove(path)
 
 
 if __name__ == "__main__":

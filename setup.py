@@ -29,6 +29,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     description="Python library to handle database ingest of geospatial track (and other) data ",
     install_requires=requirements,
@@ -43,6 +44,6 @@ setup(
     test_suite="tests",
     tests_require=test_requirements,
     url="https://github.com/debrief/pepys-import",
-    version="0.0.31",
+    version="0.0.33",
     zip_safe=False,
 )

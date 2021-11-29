@@ -7,11 +7,17 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
+from prompt_toolkit.document import Document
+from prompt_toolkit.validation import ValidationError
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.resolvers import constants
 from pepys_import.resolvers.command_line_input import is_valid
-from pepys_import.resolvers.command_line_resolver import CommandLineResolver, is_number
+from pepys_import.resolvers.command_line_resolver import (
+    CommandLineResolver,
+    MinMaxValidator,
+    is_number,
+)
 from pepys_import.utils.text_formatting_utils import formatted_text_to_str
 
 DIR_PATH = os.path.dirname(__file__)
@@ -369,7 +375,7 @@ class PlatformTestCase(unittest.TestCase):
         menu_prompt.side_effect = ["PLATFORM-1 / 123 / UK", "1"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id)
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
 
             platform = self.store.add_to_platforms(
@@ -403,7 +409,7 @@ class PlatformTestCase(unittest.TestCase):
         resolver_prompt.side_effect = ["TEST", "123", "TST", "TEST"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id)
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
             self.store.add_to_platforms(
                 "PLATFORM-1",
@@ -444,10 +450,10 @@ class PlatformTestCase(unittest.TestCase):
     def test_resolve_platform_select_existing_platform(self, resolver_prompt, menu_prompt):
         """Test whether a new platform entity is created or not"""
 
-        menu_prompt.side_effect = ["3"]
+        menu_prompt.side_effect = ["5"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id)
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id)
             uk_nat = self.store.add_to_nationalities("UK", priority=1, change_id=self.change_id)
             fr_nat = self.store.add_to_nationalities("France", priority=2, change_id=self.change_id)
             self.store.add_to_platforms(
@@ -494,7 +500,7 @@ class PlatformTestCase(unittest.TestCase):
 
         # Select "Search for existing platform"->Type "TEST"->Type name/trigraph/quadgraph/identifier
         # ->Select "Search for an existing nationality"->Select "UK"->Select "Search for an existing
-        # platform type"->Select "Warship"->Select "Search for an existing classification"->Select
+        # platform type"->Select "Naval - frigate"->Select "Search for an existing classification"->Select
         # "Public"->Select "Yes"
         menu_prompt.side_effect = [
             "2",
@@ -502,7 +508,7 @@ class PlatformTestCase(unittest.TestCase):
             "1",
             "UK",
             "1",
-            "Warship",
+            "Naval - frigate",
             "1",
             "Public",
             "1",
@@ -510,7 +516,7 @@ class PlatformTestCase(unittest.TestCase):
         resolver_platform.side_effect = ["TEST", "123", "TST", "TEST"]
         with self.store.session_scope():
             self.store.add_to_privacies("Public", 0, self.change_id)
-            self.store.add_to_platform_types("Warship", self.change_id)
+            self.store.add_to_platform_types("Naval - frigate", self.change_id)
             self.store.add_to_nationalities("UK", self.change_id)
             (
                 platform_name,
@@ -533,7 +539,7 @@ class PlatformTestCase(unittest.TestCase):
             self.assertEqual(trigraph, "TST")
             self.assertEqual(quadgraph, "TEST")
             self.assertEqual(identifier, "123")
-            self.assertEqual(platform_type.name, "Warship")
+            self.assertEqual(platform_type.name, "Naval - frigate")
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "Public")
 
@@ -545,7 +551,7 @@ class PlatformTestCase(unittest.TestCase):
         # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->
         # Select "No, make further edits"->Type name/trigraph/quadgraph/identifier->
         # Select "Search for an existing nationality"->Select "UK"->
-        # Select "Search for an existing platform type"->Select "Warship"->Select
+        # Select "Search for an existing platform type"->Select "Naval - frigate"->Select
         # "Search for an existing classification"->Select "Public"->Select "Yes"
         menu_prompt.side_effect = [
             "1",
@@ -553,7 +559,7 @@ class PlatformTestCase(unittest.TestCase):
             "1",
             "UK",
             "1",
-            "Warship",
+            "Naval - frigate",
             "1",
             "Public",
             "1",
@@ -570,7 +576,7 @@ class PlatformTestCase(unittest.TestCase):
         ]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id).name
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             (
                 platform_name,
@@ -593,7 +599,7 @@ class PlatformTestCase(unittest.TestCase):
             self.assertEqual(trigraph, "TST")
             self.assertEqual(quadgraph, "TEST")
             self.assertEqual(identifier, "123")
-            self.assertEqual(platform_type.name, "Warship")
+            self.assertEqual(platform_type.name, "Naval - frigate")
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "Public")
 
@@ -605,7 +611,7 @@ class PlatformTestCase(unittest.TestCase):
         # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->Select "No"->
         # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->
         # Select "Search for an existing nationality"->Select "UK"->
-        # Select "Search for an existing platform type"->Select "Warship"->Select
+        # Select "Search for an existing platform type"->Select "Naval - frigate"->Select
         # "Search for an existing classification"->Select "Public"->Select "Yes"
         menu_prompt.side_effect = [
             "1",
@@ -614,7 +620,7 @@ class PlatformTestCase(unittest.TestCase):
             "1",
             "UK",
             "1",
-            "Warship",
+            "Naval - frigate",
             "1",
             "Public",
             "1",
@@ -631,7 +637,7 @@ class PlatformTestCase(unittest.TestCase):
         ]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id).name
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             (
                 platform_name,
@@ -654,7 +660,7 @@ class PlatformTestCase(unittest.TestCase):
             self.assertEqual(trigraph, "TST")
             self.assertEqual(quadgraph, "TEST")
             self.assertEqual(identifier, "123")
-            self.assertEqual(platform_type.name, "Warship")
+            self.assertEqual(platform_type.name, "Naval - frigate")
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "Public")
 
@@ -670,7 +676,7 @@ class PlatformTestCase(unittest.TestCase):
             "10",
         ]
         with self.store.session_scope():
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id).name
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             (
                 platform_name,
@@ -709,7 +715,7 @@ class PlatformTestCase(unittest.TestCase):
         resolver_prompt.side_effect = ["TEST", "123", "TST", "TEST"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id)
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
             self.store.add_to_platforms(
                 "PLATFORM-1",
@@ -756,7 +762,7 @@ class PlatformTestCase(unittest.TestCase):
             "1",
             "UK",
             "1",
-            "Warship",
+            "Naval - frigate",
             "1",
             "Public",
             "1",
@@ -773,7 +779,7 @@ class PlatformTestCase(unittest.TestCase):
         ]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id).name
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             temp_output = StringIO()
             with redirect_stdout(temp_output):
@@ -818,7 +824,7 @@ class PlatformTestCase(unittest.TestCase):
         ]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id).name
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             temp_output = StringIO()
             with redirect_stdout(temp_output):
@@ -1291,6 +1297,26 @@ class SensorTestCase(unittest.TestCase):
                 change_id=self.change_id,
             )
 
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolve_missing_info(self, resolver_prompt):
+        resolver_prompt.side_effect = ["TEST_VALUE"]
+        info = self.resolver.resolve_missing_info("What do you need?", "HELLO")
+        self.assertEqual(info, "TEST_VALUE")
+
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolve_missing_info_default_fallback(self, resolver_prompt):
+        resolver_prompt.side_effect = [None]
+        info_none = self.resolver.resolve_missing_info("A question", "DEFAULT")
+        self.assertEqual(info_none, "DEFAULT")
+
+        resolver_prompt.side_effect = [""]
+        info_empty = self.resolver.resolve_missing_info("A question", "DEFAULT")
+        self.assertEqual(info_empty, "DEFAULT")
+
+        resolver_prompt.side_effect = [20]
+        info_value = self.resolver.resolve_missing_info("A question", 0)
+        self.assertEqual(info_value, 20)
+
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_sensor_empty_name_and_choice_in_sensor(self, menu_prompt):
         menu_prompt.side_effect = [
@@ -1555,7 +1581,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
         menu_prompt.side_effect = [".", ".", "."]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id)
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
             self.store.add_to_platforms(
                 "PLATFORM-1",
@@ -1579,7 +1605,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
         menu_prompt.side_effect = ["PLATFORM-1 / 123 / UK", ".", ".", "."]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id)
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
             self.store.add_to_platforms(
                 "PLATFORM-1",
@@ -1783,6 +1809,74 @@ class GetMethodsTestCase(unittest.TestCase):
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
             self.assertEqual(len(sensors), 7)
             self.assertEqual(sensors[-1].name, "SENSOR-TEST")
+
+
+class MinMaxValidatorTests(unittest.TestCase):
+    def test_min_max_validator_none(self):
+        validator = MinMaxValidator(None, None)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("ABC"))
+
+        validator.validate(Document("20"))
+
+    def test_min_max_validator_min_only(self):
+        validator = MinMaxValidator(15, None)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("14"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("0"))
+        validator.validate(Document("15"))
+        validator.validate(Document("16"))
+        validator.validate(Document("122001"))
+
+    def test_min_max_validator_max_only(self):
+        validator = MinMaxValidator(None, 15)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("16"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("122001"))
+        validator.validate(Document("15"))
+        validator.validate(Document("14"))
+        validator.validate(Document("0"))
+
+    def test_min_max_validator_same_value(self):
+        validator = MinMaxValidator(15, 15)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("16"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("14"))
+        validator.validate(Document("15"))
+
+    def test_min_max_validator_min_and_max(self):
+        validator = MinMaxValidator(10, 15)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("16"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("9"))
+        validator.validate(Document("15"))
+        validator.validate(Document("10"))
+        validator.validate(Document("13"))
+
+    def test_min_max_validator_allow_empty(self):
+        validator = MinMaxValidator(10, 15, True)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("16"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("9"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("TEXT"))
+        validator.validate(Document(""))
+
+    def test_min_max_validator__do_not_allow_empty(self):
+        validator = MinMaxValidator(10, 15, False)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("16"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("9"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("TEXT"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document(""))
 
 
 @pytest.mark.parametrize(
