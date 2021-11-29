@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pepys_import.core.validators import constants
 from pepys_import.file.importer import Importer
 
@@ -24,8 +26,26 @@ class FullShoreImporter(Importer):
     def can_load_this_file(self, file_contents):
         return True
 
+    @staticmethod
+    def parse_timestamp(date, time):
+        """Parses the fullshore timestamp from a date & time string
+        :param date: The date part of the timestamp
+        :type date: String
+        :param time: The time part of the timestamp
+        :type time: String
+        :return a datetime (GMT/UTC/Zulu) if conversion successful
+            or None if unsuccessful
+        :rtype: datetime | None
+        """
+        timestamp_format = "%d/%m/%Y %H:%M:%S"
+        timestamp_string = f"{date} {time}"
+        try:
+            res = datetime.strptime(timestamp_string, timestamp_format)
+        except ValueError:
+            return None
+        return res
+
     # TODO:
-    # - Date time handling
     # - Platform / sensor (will need to ask for platform)
     # - Determine which of the file formats we've actually got
     # Will need to check the data to see if there is a difference in length
