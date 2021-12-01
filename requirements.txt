@@ -17,6 +17,8 @@ geopy>=1.22
 halo>=0.0.31
 pandas
 geopandas
+matplotlib
+hvplot
 loguru
 sqlalchemy-utils==0.37.*
 Flask
