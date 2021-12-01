@@ -16,6 +16,7 @@ pygments>=2.7.4
 geopy>=1.22
 halo>=0.0.31
 pandas
+geopandas
 loguru
 sqlalchemy-utils==0.37.*
 Flask
