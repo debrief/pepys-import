@@ -19,6 +19,10 @@ pandas
 geopandas
 matplotlib
 hvplot
+jupyter
+branca
+folium
+mapclassify
 loguru
 sqlalchemy-utils==0.37.*
 Flask
