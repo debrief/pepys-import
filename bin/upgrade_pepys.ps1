@@ -9,8 +9,11 @@ if ($network_path -eq "") {
 
 Write-Output "Copying new version of Pepys from $network_path"
 
+Set-Location -Path ..
+
 try {
-    Copy-Item -Path "$network_path\*" -Destination "..\" -Recurse -Force -Verbose -Exclude ".git"
+    Remove-Item -Path * -Recurse -Force
+    Copy-Item -Path "$network_path\*" -Destination "." -Recurse -Force -Verbose -Exclude ".git"
 }
 catch {
     Write-Output $_
