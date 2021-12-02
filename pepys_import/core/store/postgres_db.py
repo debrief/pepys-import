@@ -132,7 +132,7 @@ class Platform(BasePostGIS, PlatformMixin):
         String(150), CheckConstraint("name <> ''", name="ck_Platforms_name"), nullable=False
     )
     identifier = Column(
-        String(30),
+        String(50),
         CheckConstraint("identifier <> ''", name="ck_Platforms_identifier"),
         nullable=False,
     )
