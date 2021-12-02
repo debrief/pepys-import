@@ -22,7 +22,7 @@ TMA_MISSING_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/tma_mi
 INVALID_LAT_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/invalid_lat.log")
 INVALID_LON_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/invalid_lon.log")
 DEPTH_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/depth.log")
-INVALID_TTM_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/ttm_invalid.log")
+# INVALID_TTM_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/ttm_invalid.log")
 
 
 class TestWecdisImporter(unittest.TestCase):
@@ -334,10 +334,10 @@ class TestWecdisImporter(unittest.TestCase):
             assert round(stored_contacts[0].location.longitude, 6) == -12.568518
             assert round(stored_contacts[0].bearing.to(ureg.degree).magnitude) == 270
             assert stored_contacts[0].orientation is None  # No course given
-            assert stored_contacts[0].sensor.sensor_type.name == "5th ABC 20Ab"
+            assert stored_contacts[0].sensor.sensor_type.name == "Position"
 
             assert stored_contacts[1].time == datetime(2021, 12, 12, 1, 13, 35, 156000)
-            assert stored_contacts[1].sensor.sensor_type.name == "missing_field"
+            assert stored_contacts[1].sensor.sensor_type.name == "Position"
 
     def test_wecdis_tma_missing_fields(self):
         processor = FileProcessor(archive=False)
@@ -387,19 +387,19 @@ class TestWecdisImporter(unittest.TestCase):
             assert round(stored_contacts[0].location.longitude, 6) == -12.568518
             assert round(stored_contacts[0].bearing.to(ureg.degree).magnitude) == 270
             assert round(stored_contacts[0].orientation.to(ureg.degree).magnitude) == 20
-            assert stored_contacts[0].track_number == "BRG - all data"
+            assert stored_contacts[0].track_number == "5th ABC 20Ab_BRG - all data"
             # Contact with course, but no location
             assert stored_contacts[1].time == datetime(2020, 11, 1, 1, 2, 34, 543000)
             assert stored_contacts[1].location is None
             assert round(stored_contacts[1].bearing.to(ureg.degree).magnitude) == 190
             assert round(stored_contacts[1].orientation.to(ureg.degree).magnitude) == 255
-            assert stored_contacts[1].track_number == "BRG - no location"
+            assert stored_contacts[1].track_number == "5th ABC 20Ab_BRG - no location"
             # Contact without course or location
             assert stored_contacts[2].time == datetime(2020, 12, 22, 1, 2, 34, 665000)
             assert stored_contacts[2].location is None
             assert round(stored_contacts[2].bearing.to(ureg.degree).magnitude) == 359
             assert stored_contacts[2].orientation is None
-            assert stored_contacts[2].track_number == "BRG - no loc/course"
+            assert stored_contacts[2].track_number == "5th ABC 20Ab_BRG - no loc/course"
 
     def test_wecdis_multi_timestep_sample(self):
         processor = FileProcessor(archive=False)
@@ -433,7 +433,7 @@ class TestWecdisImporter(unittest.TestCase):
 
             # there must be contacts after the import
             contacts = self.store.session.query(self.store.db_classes.Contact).all()
-            self.assertEqual(len(contacts), 5)
+            self.assertEqual(len(contacts), 3)
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
@@ -473,20 +473,20 @@ class TestWecdisImporter(unittest.TestCase):
             assert stored_contacts[0].bearing is None
             assert round(stored_contacts[0].soa.to(ureg.knot).magnitude, 1) == 3.2
 
-            assert stored_contacts[1].track_number == "BRG 2"
+            assert stored_contacts[1].track_number == "5th ABC 20Ab_BRG 2"
             assert round(stored_contacts[1].bearing.to(ureg.degree).magnitude) == 190
             assert stored_contacts[1].soa is None
 
             assert stored_contacts[2].bearing is None
             assert round(stored_contacts[2].soa.to(ureg.knot).magnitude, 1) == 12.5
 
-            assert round(stored_contacts[3].bearing.to(ureg.degree).magnitude, 2) == 270.52
-            assert round(stored_contacts[3].range.to(ureg.kilometer).magnitude, 2) == 3.96
-            assert stored_contacts[3].track_number == "TTM_18_a"
+            # assert round(stored_contacts[3].bearing.to(ureg.degree).magnitude, 2) == 270.52
+            # assert round(stored_contacts[3].range.to(ureg.kilometer).magnitude, 2) == 3.96
+            # assert stored_contacts[3].track_number == "TTM_18_a"
 
-            assert round(stored_contacts[4].bearing.to(ureg.degree).magnitude, 2) == 12.53
-            assert round(stored_contacts[4].range.to(ureg.kilometer).magnitude, 2) == 12.79
-            assert stored_contacts[4].track_number == "TTM_18_b"
+            # assert round(stored_contacts[4].bearing.to(ureg.degree).magnitude, 2) == 12.53
+            # assert round(stored_contacts[4].range.to(ureg.kilometer).magnitude, 2) == 12.79
+            # assert stored_contacts[4].track_number == "TTM_18_b"
 
     def test_invalid_lat(self):
         processor = FileProcessor(archive=False)
@@ -571,42 +571,42 @@ class TestWecdisImporter(unittest.TestCase):
 
             assert len(processor.importers[0].errors) == 1
 
-    def test_ttm_invalid_values(self):
-        processor = FileProcessor(archive=False)
-        processor.register_importer(WecdisImporter())
+    # def test_ttm_invalid_values(self):
+    #     processor = FileProcessor(archive=False)
+    #     processor.register_importer(WecdisImporter())
 
-        # check states empty
-        with self.store.session_scope():
-            # there must be no contacts at the beginning
-            contacts = self.store.session.query(self.store.db_classes.Contact).all()
-            self.assertEqual(len(contacts), 0)
+    #     # check states empty
+    #     with self.store.session_scope():
+    #         # there must be no contacts at the beginning
+    #         contacts = self.store.session.query(self.store.db_classes.Contact).all()
+    #         self.assertEqual(len(contacts), 0)
 
-            # there must be no platforms at the beginning
-            platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 0)
+    #         # there must be no platforms at the beginning
+    #         platforms = self.store.session.query(self.store.db_classes.Platform).all()
+    #         self.assertEqual(len(platforms), 0)
 
-            # there must be no datafiles at the beginning
-            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 0)
+    #         # there must be no datafiles at the beginning
+    #         datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+    #         self.assertEqual(len(datafiles), 0)
 
-        # parse the folder
-        processor.process(INVALID_TTM_PATH, self.store, False)
+    #     # parse the folder
+    #     processor.process(INVALID_TTM_PATH, self.store, False)
 
-        # check data got created
-        with self.store.session_scope():
-            # there must be no states after the import - invalid location
-            states = self.store.session.query(self.store.db_classes.Contact).all()
-            self.assertEqual(len(states), 0)
+    #     # check data got created
+    #     with self.store.session_scope():
+    #         # there must be no states after the import - invalid location
+    #         states = self.store.session.query(self.store.db_classes.Contact).all()
+    #         self.assertEqual(len(states), 0)
 
-            # there must be platforms after the import
-            platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 1)
+    #         # there must be platforms after the import
+    #         platforms = self.store.session.query(self.store.db_classes.Platform).all()
+    #         self.assertEqual(len(platforms), 1)
 
-            # there won't be datafile afterwards - failed import
-            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 0)
+    #         # there won't be datafile afterwards - failed import
+    #         datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+    #         self.assertEqual(len(datafiles), 0)
 
-            assert len(processor.importers[0].errors) == 4
+    #         assert len(processor.importers[0].errors) == 4
 
     # Datetime tests for formats that we don't have in sample data but are in NMEA
     @staticmethod
