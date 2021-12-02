@@ -7,12 +7,20 @@ if ($network_path -eq "") {
     Exit 1
 }
 
-Write-Output "Copying new version of Pepys from $network_path"
 
-Set-Location -Path ..
 
 try {
-    Remove-Item -Path * -Recurse -Force
+    Write-Output "Deleting old version of Pepys"
+    Set-Location -Path ..
+    # Delete all except the bin directory, as that directory is still kept open by the Powershell/CMD process
+    Remove-Item -Path * -Recurse -Force -Exclude bin -Verbose
+    # Move to bin and delete all the contents, but not the folder (it's fine to keep the folder, as we're
+    # always going to have a bin directory)
+    Set-Location -Path bin
+    Remove-Item -Path *
+    # Change back to the main directory
+    Set-Location -Path ..
+    Write-Output "Copying new version of Pepys from $network_path"
     Copy-Item -Path "$network_path\*" -Destination "." -Recurse -Force -Verbose -Exclude ".git"
 }
 catch {
