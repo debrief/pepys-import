@@ -129,7 +129,7 @@ class Platform(BaseSpatiaLite, PlatformMixin):
         String(150), CheckConstraint("name <> ''", name="ck_Platforms_name"), nullable=False
     )
     identifier = Column(
-        String(30),
+        String(50),
         CheckConstraint("identifier <> ''", name="ck_Platforms_identifier"),
         nullable=False,
     )
@@ -772,7 +772,7 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     contact_type = deferred(Column(UUIDType, ForeignKey("ContactTypes.contact_type_id")))
     _mla = deferred(Column("mla", REAL))
     _soa = deferred(Column("soa", REAL))
-    track_number = Column(String(20))
+    track_number = Column(String(40))
     subject_id = Column(
         UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade", ondelete="cascade")
     )
