@@ -275,6 +275,7 @@ class DataStore:
         finally:
             self.session.close()
 
+    @staticmethod
     def check_network_version(self):
         if config.NETWORK_MASTER_INSTALL_PATH != "":
             network_version = read_version_from_pepys_install(config.NETWORK_MASTER_INSTALL_PATH)
