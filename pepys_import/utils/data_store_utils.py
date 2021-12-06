@@ -446,6 +446,7 @@ def read_version_from_pepys_install(path):
                     # Remove whitespace, double-quotes and single-quotes from either end
                     version = splitted[1].strip().strip('"').strip("'")
                     return version
+            return None
     except Exception:
         print(f"WARNING: Cannot read Pepys version from network master install at {path}")
         return None
