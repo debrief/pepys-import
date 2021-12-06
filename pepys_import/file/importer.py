@@ -1,6 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 
+import sqlalchemy
 from tqdm import tqdm
 
 from pepys_import.file.highlighter.level import HighlightLevel
@@ -197,7 +198,11 @@ class Importer(ABC):
                 change_id=change_id,
             )
 
-            data_store.session.expunge(resolved_sensor)
+            try:
+                data_store.session.expunge(resolved_sensor)
+            except sqlalchemy.exc.InvalidRequestError:
+                # If it's already expunged then don't do it again
+                pass
             # And store it in the cache for next time
             self.platform_sensor_mapping[platform_id] = resolved_sensor
         else:
@@ -217,7 +222,9 @@ class Importer(ABC):
 
         return resolved_sensor
 
-    def get_cached_platform(self, data_store, platform_name, change_id, quadgraph=None):
+    def get_cached_platform(
+        self, data_store, platform_name, change_id, quadgraph=None, unknown=False
+    ):
         if platform_name:
             # Look for this name in the cache first
             platform_from_cache = self.platform_cache.get(platform_name)
@@ -226,7 +233,7 @@ class Importer(ABC):
 
         # Otherwise use the resolver to find it
         resolved_platform = data_store.get_platform(
-            platform_name=platform_name, quadgraph=quadgraph, change_id=change_id
+            platform_name=platform_name, quadgraph=quadgraph, change_id=change_id, unknown=unknown
         )
 
         # Put in the cache
