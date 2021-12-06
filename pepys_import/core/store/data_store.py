@@ -286,7 +286,7 @@ class DataStore:
 
             if version.parse(network_version) > version.parse(current_version):
                 print(
-                    "Your version of Pepys is out of date. Please run the Update Pepys program from the Start Menu."
+                    "Your local installation of Pepys is older than than the network master. Please run `Upgrade Pepys` from the Start Menu."
                 )
                 sys.exit(1)
 
