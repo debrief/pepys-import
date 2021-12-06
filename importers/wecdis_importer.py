@@ -46,7 +46,7 @@ class WecdisImporter(Importer):
     def can_load_this_file(self, file_contents):
         # Need to differentiate from general NMEA - so check charts/version available
         contents_string = " ".join(file_contents[0:100])
-        return "VER" in contents_string and "CHART" in contents_string
+        return ",VER," in contents_string and ",CHART," in contents_string
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
 
