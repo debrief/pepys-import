@@ -3,6 +3,7 @@
 # - Lat/long parsing
 # - Ownship vs contact
 # - Certain vs uncertain positional data
+# - Skip delete lines
 import os
 import unittest
 from datetime import datetime

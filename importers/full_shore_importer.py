@@ -38,7 +38,8 @@ class FullShoreImporter(Importer):
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
         if line_number == 1:
-            # Skip the header
+            # Skip the header & make sure we reset platform between files (may not be the same)
+            self.platform = None
             return
 
         tokens = line.tokens(line.CSV_TOKENISER, ",")
@@ -77,17 +78,17 @@ class FullShoreImporter(Importer):
         selected_tokens = {}
         if len(tokens) == 1933:
             # If we've got a sure value use that one, otherwise use the uncertain one
-            selected_tokens["lat"] = tokens[1225] if tokens[1225].text else tokens[1272]
-            selected_tokens["lon"] = tokens[1226] if tokens[1226].text else tokens[1273]
-            selected_tokens["course"] = tokens[1231] if tokens[1231].text else tokens[1266]
-            selected_tokens["speed"] = tokens[1232] if tokens[1232].text else tokens[1267]
-            selected_tokens["depth"] = tokens[1227] if tokens[1227].text else tokens[1274]
-            if tokens[1474].text:
-                selected_tokens["name_p1"] = tokens[1474]
-                selected_tokens["name_p2"] = tokens[1464]
+            selected_tokens["lat"] = tokens[1231] if tokens[1231].text else tokens[1278]
+            selected_tokens["lon"] = tokens[1232] if tokens[1232].text else tokens[1279]
+            selected_tokens["course"] = tokens[1237] if tokens[1237].text else tokens[1272]
+            selected_tokens["speed"] = tokens[1238] if tokens[1238].text else tokens[1273]
+            selected_tokens["depth"] = tokens[1233] if tokens[1233].text else tokens[1280]
+            if tokens[1480].text:
+                selected_tokens["name_p1"] = tokens[1480]
+                selected_tokens["name_p2"] = tokens[1470]
 
             else:
-                selected_tokens["name_p1"] = tokens[1483]
+                selected_tokens["name_p1"] = tokens[1489]
                 selected_tokens["name_p2"] = tokens[10]
         elif len(tokens) == 1986:
             pass
@@ -127,29 +128,30 @@ class FullShoreImporter(Importer):
         if lat_success and lon_success:
             state.location = location
             combine_tokens(lat_token, lon_token).record(
-                self.name, "location", state.location, "decimal degrees"
+                self.name, "location", state.location, "decimal radians"
             )
-
-        elevation_valid, elevation = convert_distance(
-            depth_token.text, unit_registry.meter, line_number, self.errors, self.error_type
-        )
-        if elevation_valid:
-            state.elevation = elevation * -1
-            depth_token.record(self.name, "altitude", state.elevation)
-        # TODO - check format of this angle (might be rads)
-        heading_valid, heading = convert_absolute_angle(
-            course_token.text, line_number, self.errors, self.error_type
-        )
-        if heading_valid:
-            state.heading = heading
-            course_token.record(self.name, "heading", heading)
-
-        speed_valid, speed = convert_speed(
-            speed_token.text, unit_registry.knot, line_number, self.errors, self.error_type
-        )
-        if speed_valid:
-            state.speed = speed
-            speed_token.record(self.name, "speed", speed)
+        if depth_token.text:
+            elevation_valid, elevation = convert_distance(
+                depth_token.text, unit_registry.meter, line_number, self.errors, self.error_type
+            )
+            if elevation_valid:
+                state.elevation = elevation * -1
+                depth_token.record(self.name, "altitude", state.elevation)
+        if course_token.text:
+            # TODO - check format of this angle (might be rads)
+            heading_valid, heading = convert_absolute_angle(
+                course_token.text, line_number, self.errors, self.error_type
+            )
+            if heading_valid:
+                state.heading = heading
+                course_token.record(self.name, "heading", heading)
+        if speed_token.text:
+            speed_valid, speed = convert_speed(
+                speed_token.text, unit_registry.knot, line_number, self.errors, self.error_type
+            )
+            if speed_valid:
+                state.speed = speed
+                speed_token.record(self.name, "speed", speed)
 
     def parse_contact(self, data_store, datafile, line_number, sensor, timestamp, tokens):
         """Parse a full shore recorded contact
@@ -181,28 +183,28 @@ class FullShoreImporter(Importer):
             combine_tokens(lat_token, lon_token).record(
                 self.name, "location", contact.location, "decimal degrees"
             )
-
-        elevation_valid, elevation = convert_distance(
-            depth_token.text, unit_registry.meter, line_number, self.errors, self.error_type
-        )
-        if elevation_valid:
-            contact.elevation = elevation * -1
-            depth_token.record(self.name, "altitude", contact.elevation)
-
-        # TODO - check format of this angle (might be rads)
-        bearing_valid, bearing = convert_absolute_angle(
-            course_token.text, line_number, self.errors, self.error_type
-        )
-        if bearing_valid:
-            contact.bearing = bearing
-            course_token.record(self.name, "bearing", bearing)
-
-        speed_valid, speed = convert_speed(
-            speed_token.text, unit_registry.knot, line_number, self.errors, self.error_type
-        )
-        if speed_valid:
-            contact.speed = speed
-            speed_token.record(self.name, "speed", speed)
+        if depth_token.text:
+            elevation_valid, elevation = convert_distance(
+                depth_token.text, unit_registry.meter, line_number, self.errors, self.error_type
+            )
+            if elevation_valid:
+                contact.elevation = elevation * -1
+                depth_token.record(self.name, "altitude", contact.elevation)
+        if course_token.text:
+            # TODO - check format of this angle (might be rads)
+            bearing_valid, bearing = convert_absolute_angle(
+                course_token.text, line_number, self.errors, self.error_type
+            )
+            if bearing_valid:
+                contact.bearing = bearing
+                course_token.record(self.name, "bearing", bearing)
+        if speed_token.text:
+            speed_valid, speed = convert_speed(
+                speed_token.text, unit_registry.knot, line_number, self.errors, self.error_type
+            )
+            if speed_valid:
+                contact.speed = speed
+                speed_token.record(self.name, "speed", speed)
 
     @staticmethod
     def parse_timestamp(date, time):
