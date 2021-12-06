@@ -10,6 +10,7 @@ from pepys_import.utils.sqlalchemy_utils import get_lowest_privacy
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distance, convert_speed
 
 DELETE = "eUM_DELETE"
+OWNSHIP = "OWN_SHIP"
 
 
 class FullShoreImporter(Importer):
@@ -52,10 +53,10 @@ class FullShoreImporter(Importer):
         if operation_token.text == DELETE:
             return  # We're ignoring deletions
 
-        id_token = tokens[9]
+        # id_token = tokens[9] - TODO - work out whether this is a unique track num
         source_token = tokens[10]
 
-        if source_token.text == "OWN_SHIP":
+        if source_token.text == OWNSHIP:
             # Ask for the platform & hold onto it
             self.platform = self.get_cached_platform(
                 data_store, platform_name=None, change_id=change_id
@@ -72,22 +73,22 @@ class FullShoreImporter(Importer):
             change_id=change_id,
         )
 
-        state = datafile.create_state(data_store, self.platform, sensor, timestamp, self.short_name)
-
         # The positions of many tokens vary between two formats
+        selected_tokens = {}
         if len(tokens) == 1933:
             # If we've got a sure value use that one, otherwise use the uncertain one
-            lat_token = tokens[1225] if tokens[1225].text else tokens[1272]
-            lon_token = tokens[1226] if tokens[1226].text else tokens[1273]
-            course_token = tokens[1231] if tokens[1231].text else tokens[1266]
-            speed_token = tokens[1232] if tokens[1232].text else tokens[1267]
-            depth_token = tokens[1227] if tokens[1227].text else tokens[1274]
+            selected_tokens["lat"] = tokens[1225] if tokens[1225].text else tokens[1272]
+            selected_tokens["lon"] = tokens[1226] if tokens[1226].text else tokens[1273]
+            selected_tokens["course"] = tokens[1231] if tokens[1231].text else tokens[1266]
+            selected_tokens["speed"] = tokens[1232] if tokens[1232].text else tokens[1267]
+            selected_tokens["depth"] = tokens[1227] if tokens[1227].text else tokens[1274]
             if tokens[1474].text:
-                name_p1_token = tokens[1474]
-                name_p2_token = tokens[1464]
+                selected_tokens["name_p1"] = tokens[1474]
+                selected_tokens["name_p2"] = tokens[1464]
+
             else:
-                name_p1_token = tokens[1483]
-                name_p2_token = tokens[10]
+                selected_tokens["name_p1"] = tokens[1483]
+                selected_tokens["name_p2"] = tokens[10]
         elif len(tokens) == 1986:
             pass
         else:
@@ -98,6 +99,25 @@ class FullShoreImporter(Importer):
                 }
             )
             return
+
+        if source_token.text == OWNSHIP:
+            self.parse_ownship_state(
+                data_store, datafile, line_number, sensor, timestamp, selected_tokens
+            )
+        else:
+            self.parse_contact(
+                data_store, datafile, line_number, sensor, timestamp, selected_tokens
+            )
+
+        datafile.flush_extracted_tokens()
+
+    def parse_ownship_state(self, data_store, datafile, line_number, sensor, timestamp, tokens):
+        lat_token = tokens["lat"]
+        lon_token = tokens["lon"]
+        depth_token = tokens["depth"]
+        speed_token = tokens["speed"]
+        course_token = tokens["course"]
+        state = datafile.create_state(data_store, self.platform, sensor, timestamp, self.short_name)
 
         location = Location(errors=self.errors, error_type=self.error_type)
         lat_degs = float(lat_token.text) * (180 / math.pi)
@@ -116,7 +136,7 @@ class FullShoreImporter(Importer):
         if elevation_valid:
             state.elevation = elevation * -1
             depth_token.record(self.name, "altitude", state.elevation)
-
+        # TODO - check format of this angle (might be rads)
         heading_valid, heading = convert_absolute_angle(
             course_token.text, line_number, self.errors, self.error_type
         )
@@ -127,8 +147,62 @@ class FullShoreImporter(Importer):
         speed_valid, speed = convert_speed(
             speed_token.text, unit_registry.knot, line_number, self.errors, self.error_type
         )
+        if speed_valid:
+            state.speed = speed
+            speed_token.record(self.name, "speed", speed)
 
-        datafile.flush_extracted_tokens()
+    def parse_contact(self, data_store, datafile, line_number, sensor, timestamp, tokens):
+        """Parse a full shore recorded contact
+        :param data_store: The data store
+        """
+        lat_token = tokens["lat"]
+        lon_token = tokens["lon"]
+        depth_token = tokens["depth"]
+        speed_token = tokens["speed"]
+        course_token = tokens["course"]
+        name_p1_token = tokens["name_p1"]
+        name_p2_token = tokens["name_p2"]
+        contact = datafile.create_contact(
+            data_store, self.platform, sensor, timestamp, self.short_name
+        )
+
+        contact.track_number = name_p1_token.text + "_" + name_p2_token.text
+        combine_tokens(name_p1_token, name_p2_token).record(
+            self.name, "track name", contact.track_number
+        )
+
+        location = Location(errors=self.errors, error_type=self.error_type)
+        lat_degs = float(lat_token.text) * (180 / math.pi)
+        lon_degs = float(lon_token.text) * (180 / math.pi)
+        lat_success = location.set_latitude_decimal_degrees(lat_degs)
+        lon_success = location.set_longitude_decimal_degrees(lon_degs)
+        if lat_success and lon_success:
+            contact.location = location
+            combine_tokens(lat_token, lon_token).record(
+                self.name, "location", contact.location, "decimal degrees"
+            )
+
+        elevation_valid, elevation = convert_distance(
+            depth_token.text, unit_registry.meter, line_number, self.errors, self.error_type
+        )
+        if elevation_valid:
+            contact.elevation = elevation * -1
+            depth_token.record(self.name, "altitude", contact.elevation)
+
+        # TODO - check format of this angle (might be rads)
+        bearing_valid, bearing = convert_absolute_angle(
+            course_token.text, line_number, self.errors, self.error_type
+        )
+        if bearing_valid:
+            contact.bearing = bearing
+            course_token.record(self.name, "bearing", bearing)
+
+        speed_valid, speed = convert_speed(
+            speed_token.text, unit_registry.knot, line_number, self.errors, self.error_type
+        )
+        if speed_valid:
+            contact.speed = speed
+            speed_token.record(self.name, "speed", speed)
 
     @staticmethod
     def parse_timestamp(date, time):
