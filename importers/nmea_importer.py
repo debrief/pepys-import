@@ -47,7 +47,7 @@ class NMEAImporter(Importer):
     def can_load_this_file(self, file_contents):
         # Need to check this isn't WECDIS (Which is derived from this format)
         contents_string = " ".join(file_contents[0:100])
-        return "VER" not in contents_string and "CHART" not in contents_string
+        return ",VER," not in contents_string and ",CHART," not in contents_string
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
         if line_number == 1:
