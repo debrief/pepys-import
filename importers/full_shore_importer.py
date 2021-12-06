@@ -84,31 +84,29 @@ class FullShoreImporter(Importer):
         # The positions of many tokens vary between two formats
         selected_tokens = {}
         if len(tokens) == 1933:
-            # If we've got a sure value use that one, otherwise use the uncertain one
-            selected_tokens[LATITUDE] = tokens[1231] if tokens[1231].text else tokens[1278]
-            selected_tokens[LONGITUDE] = tokens[1232] if tokens[1232].text else tokens[1279]
-            selected_tokens[COURSE] = tokens[1237] if tokens[1237].text else tokens[1272]
-            selected_tokens[SPEED] = tokens[1238] if tokens[1238].text else tokens[1273]
-            selected_tokens[DEPTH] = tokens[1233] if tokens[1233].text else tokens[1280]
-            if tokens[1480].text:
-                selected_tokens[NAME_P1] = tokens[1480]
-                selected_tokens[NAME_P2] = tokens[1470]
-
+            # If we've got original geo data use that, otherwise use Point TMS
+            selected_tokens[LATITUDE] = tokens[1225] if tokens[1231].text else tokens[1272]
+            selected_tokens[LONGITUDE] = tokens[1226] if tokens[1232].text else tokens[1273]
+            selected_tokens[DEPTH] = tokens[1233] if tokens[1233].text else tokens[1274]
+            selected_tokens[COURSE] = tokens[1231] if tokens[1237].text else tokens[1266]
+            selected_tokens[SPEED] = tokens[1232] if tokens[1238].text else tokens[1267]
+            if tokens[1474].text:
+                selected_tokens[NAME_P1] = tokens[1474]
+                selected_tokens[NAME_P2] = tokens[1464]
             else:
-                selected_tokens[NAME_P1] = tokens[1489]
+                selected_tokens[NAME_P1] = tokens[1483]
                 selected_tokens[NAME_P2] = tokens[10]
         elif len(tokens) == 1986:
-            selected_tokens[LATITUDE] = tokens[1272] if tokens[1272].text else tokens[1278]
-            selected_tokens[LONGITUDE] = tokens[1273] if tokens[1273].text else tokens[1279]
-            selected_tokens[COURSE] = tokens[1237] if tokens[1237].text else tokens[1272]
-            selected_tokens[SPEED] = tokens[1238] if tokens[1238].text else tokens[1273]
-            selected_tokens[DEPTH] = tokens[1233] if tokens[1233].text else tokens[1280]
-            if tokens[1480].text:
-                selected_tokens[NAME_P1] = tokens[1480]
-                selected_tokens[NAME_P2] = tokens[1470]
-
+            selected_tokens[LATITUDE] = tokens[1184] if tokens[1184].text else tokens[1231]
+            selected_tokens[LONGITUDE] = tokens[1185] if tokens[1185].text else tokens[1232]
+            selected_tokens[DEPTH] = tokens[1186] if tokens[1186].text else tokens[1233]
+            selected_tokens[COURSE] = tokens[1190] if tokens[1190].text else tokens[1225]
+            selected_tokens[SPEED] = tokens[1191] if tokens[1191].text else tokens[1226]
+            if tokens[1433].text:
+                selected_tokens[NAME_P1] = tokens[1433]
+                selected_tokens[NAME_P2] = tokens[10]
             else:
-                selected_tokens[NAME_P1] = tokens[1489]
+                selected_tokens[NAME_P1] = tokens[1442]
                 selected_tokens[NAME_P2] = tokens[10]
         else:
             # Invalid line length (based on the files we've got so far...)
@@ -142,7 +140,7 @@ class FullShoreImporter(Importer):
         """
         lat_token = tokens[LATITUDE]
         lon_token = tokens[LONGITUDE]
-        depth_token = tokens[DEPTH]
+        height_token = tokens[DEPTH]
         speed_token = tokens[SPEED]
         course_token = tokens[COURSE]
         state = datafile.create_state(data_store, self.platform, sensor, timestamp, self.short_name)
@@ -157,13 +155,13 @@ class FullShoreImporter(Importer):
             combine_tokens(lat_token, lon_token).record(
                 self.name, "location", state.location, "decimal radians"
             )
-        if depth_token.text:
+        if height_token.text:
             elevation_valid, elevation = convert_distance(
-                depth_token.text, unit_registry.meter, line_number, self.errors, self.error_type
+                height_token.text, unit_registry.meter, line_number, self.errors, self.error_type
             )
             if elevation_valid:
-                state.elevation = elevation * -1
-                depth_token.record(self.name, "altitude", state.elevation)
+                state.elevation = elevation
+                height_token.record(self.name, "altitude", state.elevation)
         if course_token.text:
             # TODO - check format of this angle (might be rads)
             heading_valid, heading = convert_absolute_angle(
@@ -192,7 +190,7 @@ class FullShoreImporter(Importer):
         """
         lat_token = tokens[LATITUDE]
         lon_token = tokens[LONGITUDE]
-        depth_token = tokens[DEPTH]
+        height_token = tokens[DEPTH]
         speed_token = tokens[SPEED]
         course_token = tokens[COURSE]
         name_p1_token = tokens[NAME_P1]
@@ -218,13 +216,13 @@ class FullShoreImporter(Importer):
                 combine_tokens(lat_token, lon_token).record(
                     self.name, "location", contact.location, "decimal radians"
                 )
-        if depth_token.text:
+        if height_token.text:
             elevation_valid, elevation = convert_distance(
-                depth_token.text, unit_registry.meter, line_number, self.errors, self.error_type
+                height_token.text, unit_registry.meter, line_number, self.errors, self.error_type
             )
             if elevation_valid:
                 contact.elevation = elevation * -1
-                depth_token.record(self.name, "altitude", contact.elevation)
+                height_token.record(self.name, "altitude", contact.elevation)
         if course_token.text:
             # TODO - check format of this angle (might be rads)
             bearing_valid, bearing = convert_absolute_angle(
