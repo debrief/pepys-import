@@ -11,6 +11,13 @@ from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distan
 
 DELETE = "eUM_DELETE"
 OWNSHIP = "OWN_SHIP"
+LATITUDE = "Latitude"
+LONGITUDE = "Longitude"
+DEPTH = "Depth"
+SPEED = "Speed"
+COURSE = "Course"
+NAME_P1 = "Name_P1"
+NAME_P2 = "Name_P2"
 
 
 class FullShoreImporter(Importer):
@@ -50,7 +57,7 @@ class FullShoreImporter(Importer):
         timestamp = self.parse_timestamp(tokens[1].text, tokens[2].text)
         combine_tokens(date_token, time_token).record(self.name, "timestamp", timestamp)
 
-        operation_token = tokens[3]
+        operation_token = tokens[4]
         if operation_token.text == DELETE:
             return  # We're ignoring deletions
 
@@ -78,20 +85,31 @@ class FullShoreImporter(Importer):
         selected_tokens = {}
         if len(tokens) == 1933:
             # If we've got a sure value use that one, otherwise use the uncertain one
-            selected_tokens["lat"] = tokens[1231] if tokens[1231].text else tokens[1278]
-            selected_tokens["lon"] = tokens[1232] if tokens[1232].text else tokens[1279]
-            selected_tokens["course"] = tokens[1237] if tokens[1237].text else tokens[1272]
-            selected_tokens["speed"] = tokens[1238] if tokens[1238].text else tokens[1273]
-            selected_tokens["depth"] = tokens[1233] if tokens[1233].text else tokens[1280]
+            selected_tokens[LATITUDE] = tokens[1231] if tokens[1231].text else tokens[1278]
+            selected_tokens[LONGITUDE] = tokens[1232] if tokens[1232].text else tokens[1279]
+            selected_tokens[COURSE] = tokens[1237] if tokens[1237].text else tokens[1272]
+            selected_tokens[SPEED] = tokens[1238] if tokens[1238].text else tokens[1273]
+            selected_tokens[DEPTH] = tokens[1233] if tokens[1233].text else tokens[1280]
             if tokens[1480].text:
-                selected_tokens["name_p1"] = tokens[1480]
-                selected_tokens["name_p2"] = tokens[1470]
+                selected_tokens[NAME_P1] = tokens[1480]
+                selected_tokens[NAME_P2] = tokens[1470]
 
             else:
-                selected_tokens["name_p1"] = tokens[1489]
-                selected_tokens["name_p2"] = tokens[10]
+                selected_tokens[NAME_P1] = tokens[1489]
+                selected_tokens[NAME_P2] = tokens[10]
         elif len(tokens) == 1986:
-            pass
+            selected_tokens[LATITUDE] = tokens[1272] if tokens[1272].text else tokens[1278]
+            selected_tokens[LONGITUDE] = tokens[1273] if tokens[1273].text else tokens[1279]
+            selected_tokens[COURSE] = tokens[1237] if tokens[1237].text else tokens[1272]
+            selected_tokens[SPEED] = tokens[1238] if tokens[1238].text else tokens[1273]
+            selected_tokens[DEPTH] = tokens[1233] if tokens[1233].text else tokens[1280]
+            if tokens[1480].text:
+                selected_tokens[NAME_P1] = tokens[1480]
+                selected_tokens[NAME_P2] = tokens[1470]
+
+            else:
+                selected_tokens[NAME_P1] = tokens[1489]
+                selected_tokens[NAME_P2] = tokens[10]
         else:
             # Invalid line length (based on the files we've got so far...)
             self.errors.append(
@@ -113,11 +131,20 @@ class FullShoreImporter(Importer):
         datafile.flush_extracted_tokens()
 
     def parse_ownship_state(self, data_store, datafile, line_number, sensor, timestamp, tokens):
-        lat_token = tokens["lat"]
-        lon_token = tokens["lon"]
-        depth_token = tokens["depth"]
-        speed_token = tokens["speed"]
-        course_token = tokens["course"]
+        """Parse a full shore recorded ownship state
+        :param data_store: The data store that this is importing into
+        :param datafile: The datafile being imported
+        :param line_number: The number of the line currently being imported
+        :param sensor: The sensor associated with this state update
+        :param timestamp: The timestamp of this state change
+        :param tokens: The tokens that we are using to generate this state
+        :ptype tokens: A dictionary of name/token pairs e.g. "lat": latitude_token
+        """
+        lat_token = tokens[LATITUDE]
+        lon_token = tokens[LONGITUDE]
+        depth_token = tokens[DEPTH]
+        speed_token = tokens[SPEED]
+        course_token = tokens[COURSE]
         state = datafile.create_state(data_store, self.platform, sensor, timestamp, self.short_name)
 
         location = Location(errors=self.errors, error_type=self.error_type)
@@ -155,15 +182,21 @@ class FullShoreImporter(Importer):
 
     def parse_contact(self, data_store, datafile, line_number, sensor, timestamp, tokens):
         """Parse a full shore recorded contact
-        :param data_store: The data store
+        :param data_store: The data store that this is importing into
+        :param datafile: The datafile being imported
+        :param line_number: The number of the line currently being imported
+        :param sensor: The sensor that detected this contact
+        :param timestamp: The timestamp of this contact detection
+        :param tokens: The tokens that we are using to generate this contact
+        :ptype tokens: A dictionary of name/token pairs e.g. "lat": latitude_token
         """
-        lat_token = tokens["lat"]
-        lon_token = tokens["lon"]
-        depth_token = tokens["depth"]
-        speed_token = tokens["speed"]
-        course_token = tokens["course"]
-        name_p1_token = tokens["name_p1"]
-        name_p2_token = tokens["name_p2"]
+        lat_token = tokens[LATITUDE]
+        lon_token = tokens[LONGITUDE]
+        depth_token = tokens[DEPTH]
+        speed_token = tokens[SPEED]
+        course_token = tokens[COURSE]
+        name_p1_token = tokens[NAME_P1]
+        name_p2_token = tokens[NAME_P2]
         contact = datafile.create_contact(
             data_store, self.platform, sensor, timestamp, self.short_name
         )
@@ -173,16 +206,18 @@ class FullShoreImporter(Importer):
             self.name, "track name", contact.track_number
         )
 
-        location = Location(errors=self.errors, error_type=self.error_type)
-        lat_degs = float(lat_token.text) * (180 / math.pi)
-        lon_degs = float(lon_token.text) * (180 / math.pi)
-        lat_success = location.set_latitude_decimal_degrees(lat_degs)
-        lon_success = location.set_longitude_decimal_degrees(lon_degs)
-        if lat_success and lon_success:
-            contact.location = location
-            combine_tokens(lat_token, lon_token).record(
-                self.name, "location", contact.location, "decimal degrees"
-            )
+        # We may not have a latitude/longitude
+        if lat_token.text and lon_token.text:
+            location = Location(errors=self.errors, error_type=self.error_type)
+            lat_degs = float(lat_token.text) * (180 / math.pi)
+            lon_degs = float(lon_token.text) * (180 / math.pi)
+            lat_success = location.set_latitude_decimal_degrees(lat_degs)
+            lon_success = location.set_longitude_decimal_degrees(lon_degs)
+            if lat_success and lon_success:
+                contact.location = location
+                combine_tokens(lat_token, lon_token).record(
+                    self.name, "location", contact.location, "decimal radians"
+                )
         if depth_token.text:
             elevation_valid, elevation = convert_distance(
                 depth_token.text, unit_registry.meter, line_number, self.errors, self.error_type
@@ -224,22 +259,3 @@ class FullShoreImporter(Importer):
         except ValueError:
             return None
         return res
-
-    # TODO:
-    # - Platform / sensor (will need to ask for platform)
-    # - Determine which of the file formats we've actually got
-    # Will need to check the data to see if there is a difference in length
-    # Otherwise, will need to get column names
-    # - Read in ownship positions
-    # - Read in tracks/contacts
-
-    # Some complexities:
-    # - We have two different formatted files (Sept 20 / Jan 21 formatted one way, Mar 21 formatted differently)
-    # - Full Shore format has a range of different sources of data, with any
-    # being present on a row (but only one present per row) so ownship tracks
-    # are mixed up with contacts
-    #    - To minimise possible issues with classification of importer,
-    #    check if ownship and then parse everything else as contacts
-    # - There are a lot of columns in these data files, with lots of the important
-    # ones being towards the end of the table. This may cause issues with the
-    # hightlighting.
