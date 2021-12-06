@@ -132,7 +132,7 @@ class Platform(BasePostGIS, PlatformMixin):
         String(150), CheckConstraint("name <> ''", name="ck_Platforms_name"), nullable=False
     )
     identifier = Column(
-        String(30),
+        String(50),
         CheckConstraint("identifier <> ''", name="ck_Platforms_identifier"),
         nullable=False,
     )
@@ -766,7 +766,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     )
     _mla = deferred(Column("mla", DOUBLE_PRECISION))
     _soa = deferred(Column("soa", DOUBLE_PRECISION))
-    track_number = Column(String(20))
+    track_number = Column(String(40))
     subject_id = Column(
         UUID(as_uuid=True),
         ForeignKey("pepys.Platforms.platform_id", onupdate="cascade", ondelete="cascade"),

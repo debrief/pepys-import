@@ -3,6 +3,16 @@ History
 =======
 
 
+0.0.33 (2021-11-29)
+-------------------
+
+* Support for Unknown Platforms in bulk import
+* Add validation in Tasks UI for start time before end time
+* Show warning if database requires migration
+* Introduce updated platform icons in timeline
+* Allow filtered export of measurement data
+
+
 0.0.31 (2021-10-12)
 -------------------
 
