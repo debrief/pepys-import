@@ -517,6 +517,7 @@ class TestWecdisImporter(unittest.TestCase):
             # there must be no states after the import
             states = self.store.session.query(self.store.db_classes.State).all()
             self.assertEqual(len(states), 0)
+
             # there must be no contacts after the import
             contacts = self.store.session.query(self.store.db_classes.Contact).all()
             self.assertEqual(len(contacts), 0)
@@ -529,7 +530,12 @@ class TestWecdisImporter(unittest.TestCase):
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 0)
 
+            # just one importer has run
+            assert len(processor.importers) == 1
+            # just one error reported
             assert len(processor.importers[0].errors) == 1
+            # error related to latitude length
+            self.assertTrue("incorrect length for latitude", processor.importers[0].errors[0])
 
     def test_invalid_lon(self):
         processor = FileProcessor(archive=False)
