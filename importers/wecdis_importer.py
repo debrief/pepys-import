@@ -187,9 +187,6 @@ class WecdisImporter(Importer):
         location = self._parse_lat_lon_tokens(lat_token, lat_hem_token, lon_token, lon_hem_token)
         if location:
             contact.location = location
-
-        if location:
-            contact.location = location
             combine_tokens(lat_token, lon_token).record(
                 self.name, "location", contact.location, "DMS"
             )
