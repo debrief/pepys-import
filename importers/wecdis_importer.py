@@ -29,7 +29,7 @@ class WecdisImporter(Importer):
             short_name="WECDIS Importer",
             datafile_type="WECDIS",
         )
-
+        self.current_line_no = None
         self.platform_name = None
         self.timestamp = None
         self.elevation = None
@@ -49,7 +49,7 @@ class WecdisImporter(Importer):
         return ",VER," in contents_string or ",CHART," in contents_string
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
-
+        self.current_line_no = line_number
         tokens = line.tokens(line.CSV_TOKENISER, ",")
         if len(tokens) > 1:
             # Always skip the $POSL tag [0]
@@ -451,6 +451,27 @@ class WecdisImporter(Importer):
             errors=self.errors,
             error_type=self.error_type,
         )
+
+        lat_prefix = latitude.split('.')[0]
+        lon_prefix = longitude.split('.')[0]
+
+        if len(lat_prefix) != 4:
+            self.errors.append(
+                {
+                    self.error_type: f"Error on line {self.current_line_no}. "
+                    f"Incorrect length for latitude token: {lat_prefix}"
+                }
+            )
+            return None 
+
+        if len(lon_prefix) != 5:
+            self.errors.append(
+                {
+                    self.error_type: f"Error on line {self.current_line_no}. "
+                    f"Incorrect length for longitude token: {lon_prefix}"
+                }
+            )
+            return None 
 
         if not location.set_latitude_dms(
             degrees=latitude[:2], minutes=latitude[2:], seconds=0, hemisphere=lat_hem_token.text
