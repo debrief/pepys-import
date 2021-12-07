@@ -92,6 +92,8 @@ try {
     # Pepys Viewer shortcuts
     Make-Shortcut -ShortcutLocation ($startmenu_location + "Pepys\Pepys Viewer.lnk") -TargetPath ".\pepys_viewer.bat" -Icon $icon_string
     Make-Shortcut -ShortcutLocation ($startmenu_location + "Pepys\Pepys Viewer (training mode).lnk") -TargetPath ".\pepys_viewer_training.bat" -Icon $icon_string
+
+    Make-Shortcut -ShortcutLocation ($startmenu_location + "Pepys\Upgrade Pepys.lnk") -TargetPath ".\upgrade_pepys.bat" -Icon $icon_string
 }
 catch {
     Write-Output $_

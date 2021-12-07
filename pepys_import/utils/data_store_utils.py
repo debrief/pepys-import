@@ -433,3 +433,20 @@ def convert_objects_to_ids(items, table_obj):
         else:
             value = items
         return value
+
+
+def read_version_from_pepys_install(path):
+    init_path = os.path.join(path, "pepys_import", "__init__.py")
+
+    try:
+        with open(init_path, "r") as f:
+            for line in f:
+                if "__version__" in line:
+                    splitted = line.split("=")
+                    # Remove whitespace, double-quotes and single-quotes from either end
+                    version = splitted[1].strip().strip('"').strip("'")
+                    return version
+            return None
+    except Exception:
+        print(f"WARNING: Cannot read Pepys version from network master install at {path}")
+        return None

@@ -66,3 +66,6 @@ if ARCHIVE_PASSWORD.startswith("_") and ARCHIVE_PASSWORD.endswith("_"):
 LOCAL_PARSERS = config.get("local", "parsers", fallback="")
 LOCAL_BASIC_TESTS = config.get("local", "basic_tests", fallback="")
 LOCAL_ENHANCED_TESTS = config.get("local", "enhanced_tests", fallback="")
+
+# Fetch network section
+NETWORK_MASTER_INSTALL_PATH = config.get("network", "master_install_path", fallback="")
