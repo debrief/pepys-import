@@ -222,8 +222,7 @@ class WecdisImporter(Importer):
         location = self._parse_lat_lon_tokens(lat_token, lat_hem_token, lon_token, lon_hem_token)
         if location:
             state.location = location
-
-        combine_tokens(lat_token, lon_token).record(self.name, "location", location, "DMS")
+            combine_tokens(lat_token, lon_token).record(self.name, "location", location, "DMS")
 
         if tokens[1].text == "CPOS":
             heading_token = tokens[7]
@@ -305,8 +304,7 @@ class WecdisImporter(Importer):
         location = self._parse_lat_lon_tokens(lat_token, lat_hem_token, lon_token, lon_hem_token)
         if location:
             contact.location = location
-
-        combine_tokens(lat_token, lon_token).record(self.name, "location", location, "DMS")
+            combine_tokens(lat_token, lon_token).record(self.name, "location", location, "DMS")
 
         track_name, _, _ = tma_name_token.text.partition("*")
         # Looking at the data, there seems to be a unique combination of sensor and
