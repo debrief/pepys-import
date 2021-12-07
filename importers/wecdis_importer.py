@@ -452,8 +452,8 @@ class WecdisImporter(Importer):
             error_type=self.error_type,
         )
 
-        lat_prefix = latitude.split('.')[0]
-        lon_prefix = longitude.split('.')[0]
+        lat_prefix = latitude.split(".")[0]
+        lon_prefix = longitude.split(".")[0]
 
         if len(lat_prefix) != 4:
             self.errors.append(
@@ -462,7 +462,7 @@ class WecdisImporter(Importer):
                     f"Incorrect length for latitude token: {lat_prefix}"
                 }
             )
-            return None 
+            return None
 
         if len(lon_prefix) != 5:
             self.errors.append(
@@ -471,7 +471,7 @@ class WecdisImporter(Importer):
                     f"Incorrect length for longitude token: {lon_prefix}"
                 }
             )
-            return None 
+            return None
 
         if not location.set_latitude_dms(
             degrees=latitude[:2], minutes=latitude[2:], seconds=0, hemisphere=lat_hem_token.text
