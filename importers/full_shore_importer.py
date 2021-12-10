@@ -79,7 +79,7 @@ class FullShoreImporter(Importer):
         if source_token.text == OWNSHIP:
             # Ask for the platform & hold onto it
             self.platform = self.get_cached_platform(
-                data_store, platform_name=None, change_id=change_id
+                data_store, platform_name=OWNSHIP, change_id=change_id
             )
 
         sensor_type = data_store.add_to_sensor_types(source_token.text, change_id).name
