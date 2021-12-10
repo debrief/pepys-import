@@ -51,6 +51,16 @@ class FullShoreImporter(Importer):
 
         tokens = line.tokens(line.CSV_TOKENISER, ",")
 
+        # Check length first because we're reliant on positions in the line
+        if len(tokens) != 1933 and len(tokens) != 1986:
+            # Invalid line length (based on the files we've got so far...)
+            self.errors.append(
+                {
+                    self.error_type: f"Error on line {line_number}. Unable to read Full Shore with {len(tokens)} tokens"
+                }
+            )
+            return
+
         # Date time parsing common to both file formats
         date_token = tokens[1]
         time_token = tokens[2]
@@ -108,14 +118,6 @@ class FullShoreImporter(Importer):
             else:
                 selected_tokens[NAME_P1] = tokens[1442]
                 selected_tokens[NAME_P2] = tokens[10]
-        else:
-            # Invalid line length (based on the files we've got so far...)
-            self.errors.append(
-                {
-                    self.error_type: f"Error on line {line_number}. Unable to read Full Shore with {len(tokens)} tokens"
-                }
-            )
-            return
 
         if source_token.text == OWNSHIP:
             self.parse_ownship_state(
