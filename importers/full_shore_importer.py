@@ -207,8 +207,8 @@ class FullShoreImporter(Importer):
         # We may not have a latitude/longitude
         if lat_token.text and lon_token.text:
             location = Location(errors=self.errors, error_type=self.error_type)
-            lat_degs = float(lat_token.text) * (180 / math.pi)
-            lon_degs = float(lon_token.text) * (180 / math.pi)
+            lat_degs = math.degrees(float(lat_token.text))
+            lon_degs = math.degrees(float(lon_token.text))
             lat_success = location.set_latitude_decimal_degrees(lat_degs)
             lon_success = location.set_longitude_decimal_degrees(lon_degs)
             if lat_success and lon_success:
@@ -221,7 +221,7 @@ class FullShoreImporter(Importer):
                 height_token.text, unit_registry.meter, line_number, self.errors, self.error_type
             )
             if elevation_valid:
-                contact.elevation = elevation * -1
+                contact.elevation = elevation
                 height_token.record(self.name, "altitude", contact.elevation)
         if course_token.text:
             # TODO - check format of this angle (might be rads)
