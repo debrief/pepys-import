@@ -4,6 +4,7 @@ from datetime import datetime
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
+from pepys_import.file.highlighter.level import HighlightLevel
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.file.importer import Importer
 from pepys_import.utils.sqlalchemy_utils import get_lowest_privacy
@@ -30,6 +31,7 @@ class FullShoreImporter(Importer):
             default_privacy="Private",
         )
         self.platform = None
+        self.set_highlighting_level(HighlightLevel.NONE)
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".CSV"
