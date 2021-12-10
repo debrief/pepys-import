@@ -95,7 +95,7 @@ class FullShoreImporter(Importer):
 
         # The positions of many tokens vary between two formats
         selected_tokens = {}
-        if len(tokens) == 1933:
+        if len(tokens) == 1986:
             # If we've got original geo data use that, otherwise use Point TMS
             selected_tokens[LATITUDE] = tokens[1225] if tokens[1231].text else tokens[1272]
             selected_tokens[LONGITUDE] = tokens[1226] if tokens[1232].text else tokens[1273]
@@ -108,7 +108,7 @@ class FullShoreImporter(Importer):
             else:
                 selected_tokens[NAME_P1] = tokens[1483]
                 selected_tokens[NAME_P2] = tokens[10]
-        elif len(tokens) == 1986:
+        elif len(tokens) == 1933:
             selected_tokens[LATITUDE] = tokens[1184] if tokens[1184].text else tokens[1231]
             selected_tokens[LONGITUDE] = tokens[1185] if tokens[1185].text else tokens[1232]
             selected_tokens[DEPTH] = tokens[1186] if tokens[1186].text else tokens[1233]
