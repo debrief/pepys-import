@@ -495,11 +495,11 @@ class JChatTests(unittest.TestCase):
         with self.store.session_scope():
             # there must be states after the import
             comments = self.store.session.query(self.store.db_classes.Comment).all()
-            assert len(comments) == 5
+            assert len(comments) == 7
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            assert len(platforms) == 3
+            assert len(platforms) == 5
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
@@ -510,12 +510,14 @@ class JChatTests(unittest.TestCase):
                 .order_by(self.store.db_classes.Comment.time)
                 .all()
             )
-            assert len(results) == 5
+            assert len(results) == 7
             assert results[0].content == "Modern - has i tag"
             assert results[1].content == "Modern - no i tag but has multiple breaks"
             assert results[2].content == "Modern - no i tag - no breaks"
             assert results[3].content == "Legacy - font a swap - no i tag - no breaks"
             assert results[4].content == "Legacy - font a swap - has i tag - no breaks"
+            assert results[5].content == "Modern 2 - no i tag but has multiple breaks"
+            assert results[6].content == "Modern 2 - no i tag - no breaks"
 
     def test_invalid_missing_timestamp(self):
         html_string = """<html>
