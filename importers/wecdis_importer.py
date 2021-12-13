@@ -20,6 +20,8 @@ class MsgType(str, Enum):
     TMA = "TMA"
     DEPTH = "PDS"
     TTM = "TTM"  # Could be TTM1, TTM2, TTM3
+    SPEED = "VEL"
+    HEADING = "HDG"
 
 
 class WecdisImporter(Importer):
@@ -32,6 +34,8 @@ class WecdisImporter(Importer):
         )
         self.current_line_no = None
         self.platform_name = None
+        self.platform_speed = None
+        self.platform_heading = None
         self.timestamp = None
         self.elevation = None
         self.set_highlighting_level(HighlightLevel.NONE)
@@ -70,6 +74,10 @@ class WecdisImporter(Importer):
                     self.handle_position(data_store, line_number, tokens, datafile, change_id)
             elif msg_type == MsgType.TMA:
                 self.handle_tma(data_store, line_number, tokens, datafile, change_id)
+            elif MsgType.SPEED in msg_type:
+                self.handle_speed(tokens, line_number)
+            elif MsgType.HEADING in msg_type:
+                self.handle_heading(tokens, line_number)
             # elif MsgType.TTM in msg_type:
             #     self.handle_ttm(data_store, line_number, tokens, datafile, change_id)
         datafile.flush_extracted_tokens()
@@ -108,6 +116,36 @@ class WecdisImporter(Importer):
             if depth_valid:
                 self.elevation = -1 * depth
             depth_token.record(self.name, "Depth", self.elevation)
+
+    def handle_speed(self, tokens, line_number):
+        """Extracts the speed from the VEL line
+        :param tokens: A tokenised VEL line
+        :ptype tokens: Line (list of tokens)
+        :param line_number: The line number of the speed"""
+        speed_token = tokens[6]
+        units = unit_registry.knot  # TODO - check whether we can derive units
+        if speed_token and speed_token.text:
+            speed_valid, speed = convert_speed(
+                speed_token.text, units, line_number, self.errors, self.error_type
+            )
+            if speed_valid:
+                self.platform_speed = speed
+                speed_token.record(self.name, "Speed", self.platform_speed)
+
+    def handle_heading(self, tokens, line_number):
+        """Extracts the heading from the HDG line
+        :param tokens: A tokenised HDG line
+        :ptype tokens: Line (list of tokens)
+        :param line_number: The line number of the heading being parsed"""
+        heading_token = tokens[2]
+        # TODO - confirm we're always in degs
+        if heading_token and heading_token.text:
+            heading_valid, heading = convert_absolute_angle(
+                heading_token.text, line_number, self.errors, self.error_type
+            )
+            if heading_valid:
+                self.platform_heading = heading
+                heading_token.record(self.name, "Heading", self.platform_heading)
 
     def handle_timestamp(self, dza_tokens, line_number):
         """Extracts the important information from a DZA (Timestamp) line
@@ -242,7 +280,12 @@ class WecdisImporter(Importer):
             if speed_valid:
                 state.speed = speed
                 speed_token.record(self.name, "speed", speed)
-
+        elif tokens[1].text == "POS":
+            # Speed / heading for POS is taken from the VEL/HDG lines
+            if self.platform_speed:
+                state.speed = self.platform_speed
+            if self.platform_heading:
+                state.heading = self.platform_heading
         if self.elevation:
             state.elevation = self.elevation
 
