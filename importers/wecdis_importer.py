@@ -34,8 +34,8 @@ class WecdisImporter(Importer):
         )
         self.current_line_no = None
         self.platform_name = None
-        self.platform_speed = None
-        self.platform_heading = None
+        self.platform_speed = {}
+        self.platform_heading = {}
         self.timestamp = None
         self.elevation = None
         self.set_highlighting_level(HighlightLevel.NONE)
@@ -129,7 +129,9 @@ class WecdisImporter(Importer):
                 speed_token.text, units, line_number, self.errors, self.error_type
             )
             if speed_valid:
-                self.platform_speed = speed
+                key = "1" if tokens[1].text == MsgType.SPEED else tokens[1].text[-1]
+                print(f"Speed index == {key}")
+                self.platform_speed[key] = speed
                 speed_token.record(self.name, "Speed", self.platform_speed)
 
     def handle_heading(self, tokens, line_number):
@@ -144,7 +146,9 @@ class WecdisImporter(Importer):
                 heading_token.text, line_number, self.errors, self.error_type
             )
             if heading_valid:
-                self.platform_heading = heading
+                key = "1" if tokens[1].text == MsgType.HEADING else tokens[1].text[-1]
+                print(f"Heading index == {key}")
+                self.platform_heading[key] = heading
                 heading_token.record(self.name, "Heading", self.platform_heading)
 
     def handle_timestamp(self, dza_tokens, line_number):
@@ -280,12 +284,16 @@ class WecdisImporter(Importer):
             if speed_valid:
                 state.speed = speed
                 speed_token.record(self.name, "speed", speed)
-        elif tokens[1].text == "POS":
+        elif tokens[1].text.startswith("POS"):
+            key = "1" if tokens[1].text == MsgType.POSITION else tokens[1].text[-1]
+            print(f"Position index == {key}")
+            print(f"speed: {self.platform_speed}")
+            print(f"hdg: {self.platform_heading}")
             # Speed / heading for POS is taken from the VEL/HDG lines
             if self.platform_speed:
-                state.speed = self.platform_speed
+                state.speed = self.platform_speed[key]
             if self.platform_heading:
-                state.heading = self.platform_heading
+                state.heading = self.platform_heading[key]
         if self.elevation:
             state.elevation = self.elevation
 
