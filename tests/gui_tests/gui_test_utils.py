@@ -66,6 +66,7 @@ if sys.platform != "win32":
 
             return "\n".join(screen.display)
 
+
 else:
 
     def run_gui():

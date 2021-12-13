@@ -4,6 +4,7 @@ from enum import Enum
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
+from pepys_import.file.highlighter.level import HighlightLevel
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.file.importer import Importer
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distance, convert_speed
@@ -33,6 +34,7 @@ class WecdisImporter(Importer):
         self.platform_name = None
         self.timestamp = None
         self.elevation = None
+        self.set_highlighting_level(HighlightLevel.NONE)
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".LOG" or suffix.upper() == ".TXT"
