@@ -290,7 +290,7 @@ class WecdisImporter(Importer):
         detecting_platform = self.get_cached_platform(data_store, self.platform_name, change_id)
         detecting_sensor = self.get_cached_sensor(
             data_store,
-            sensor_name=None,  # Ask, as we don't know where it came from
+            sensor_name=f"{tokens[1].text}-{type_token.text}",  # Ask, as we don't know where it came from
             sensor_type=None,
             platform_id=detecting_platform.platform_id,
             change_id=change_id,
