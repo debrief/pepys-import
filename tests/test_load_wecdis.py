@@ -240,21 +240,24 @@ class TestWecdisImporter(unittest.TestCase):
             ureg = UnitRegistry()
             assert states[0].speed is None
             assert states[0].heading is None
-            assert states[0].sensor.sensor_type.name == "GPS"
+            assert states[0].sensor.name == "GPS"
+            assert states[0].sensor.sensor_type.name == "Location-Satellite"
             # CPOS
             assert states[1].time == datetime(2021, 11, 1, 1, 2, 30, 123000)
             assert round(states[1].location.latitude, 6) == -12.57613
             assert round(states[1].location.longitude, 6) == -0.514239
             assert round(states[1].speed.to(ureg.knot).magnitude, 1) == 2.8
             assert states[1].heading.to(ureg.degree).magnitude == 340
-            assert states[1].sensor.sensor_type.name == "ABC_XY"
+            assert states[1].sensor.name == "ABC_XY"
+            assert states[1].sensor.sensor_type.name == "Location-Satellite"
             # POS2
             assert states[2].time == datetime(2021, 11, 1, 1, 2, 30, 123000)
             assert round(states[2].location.latitude, 6) == 12.500054
             assert round(states[2].location.longitude, 6) == 1.170567
             assert states[2].speed is None
             assert states[2].heading is None
-            assert states[2].sensor.sensor_type.name == "SENSOR1"
+            assert states[2].sensor.name == "SENSOR1"
+            assert states[2].sensor.sensor_type.name == "Location-Satellite"
 
     def test_tma_ignore_sol_max(self):
         processor = FileProcessor(archive=False)
@@ -451,9 +454,11 @@ class TestWecdisImporter(unittest.TestCase):
             ureg = UnitRegistry()
 
             assert stored_states[0].time == datetime(2021, 11, 1, 1, 2, 30, 123000)
-            assert stored_states[0].sensor.sensor_type.name == "GPS"
+            assert stored_states[0].sensor.name == "GPS"
+            assert stored_states[0].sensor.sensor_type.name == "Location-Satellite"
             assert stored_states[1].time == datetime(2021, 11, 1, 1, 2, 30, 123000)
-            assert stored_states[1].sensor.sensor_type.name == "ABC_XY"
+            assert stored_states[1].sensor.name == "ABC_XY"
+            assert stored_states[1].sensor.sensor_type.name == "Location-Satellite"
             assert stored_states[2].time == datetime(2021, 11, 1, 1, 2, 45, 10000)
             assert stored_states[4].time == datetime(2021, 11, 1, 1, 3, 5, 10000)
             assert stored_states[6].time == datetime(2021, 12, 12, 1, 3, 35, 10000)

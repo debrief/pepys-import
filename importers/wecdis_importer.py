@@ -211,11 +211,11 @@ class WecdisImporter(Importer):
         combine_tokens(source_token, sensor_token).record(self.name, "sensor", sensor_name)
 
         platform = self.get_cached_platform(data_store, self.platform_name, change_id=change_id)
-        sensor = self.get_cached_sensor(
+        sensor_type = data_store.add_to_sensor_types("Location-Satellite", change_id=change_id).name
+        sensor = platform.get_sensor(
             data_store=data_store,
-            sensor_name=sensor_name,
-            sensor_type=sensor_token.text,
-            platform_id=platform.platform_id,
+            sensor_name=sensor_token.text,
+            sensor_type=sensor_type,
             change_id=change_id,
         )
 
