@@ -122,24 +122,29 @@ class JChatImporter(Importer):
             # Older format uses id=
             # Newer format uses msgid=
             msg_id = div.attrib["msgid"]  # Grabbing ID to help with error reporting
-            version = JCHAT_MODERN
         except KeyError:
             try:
                 msg_id = div.attrib["id"]
-                version = JCHAT_LEGACY
             except KeyError:
                 # Ignore any non-comment messages (e.g. connect/disconnect)
                 return
-
-        time_element = div.find("{*}tt/font")
 
         # Sample data included some "Marker" messages with the id="marker"
         if str.upper(msg_id) == "MARKER":
             return  # Ignore these messages
 
-        if time_element is None:
+        text_blocks = []
+        text_blocks.append([item for item in div.findall(".//*") if item.text])
+        if text_blocks[0]:
+            time_element = text_blocks[0][0]
+            platform_element = text_blocks[0][1]
+            msg_content_element = text_blocks[0][2:]
+
+        if not text_blocks[0] or len(text_blocks[0]) < 3:
             self.errors.append(
-                {self.error_type: f"Unable to read message {msg_id}. No timestamp provided"}
+                {
+                    self.error_type: f"Unable to read message {msg_id}. Not enough parts (expecting timestamp, platform, message)"
+                }
             )
             return
 
@@ -147,29 +152,13 @@ class JChatImporter(Importer):
         timestamp = self.parse_timestamp(time_string, msg_id)
         time_element.record(self.name, "timestamp", timestamp)
 
-        if version == JCHAT_LEGACY:
-            platform_element = div.find("{*}b/a/font")
-        else:  # version == JCHAT_MODERN
-            platform_element = div.find("{*}b/font/a")
-
-        if platform_element is None:
-            self.errors.append(
-                {self.error_type: f"Unable to read message {msg_id}. No platform provided"}
-            )
-            return
         platform_quad = platform_element.text[0:4]
         platform_element.record(self.name, "platform", platform_quad)
         # Match on quadgraphs
         platform = self.get_cached_platform_from_quad(data_store, platform_quad, change_id)
 
-        msg_content_element = [element for element in div.iterfind("font")]
-
-        if not msg_content_element:
-            self.errors.append(
-                {self.error_type: f"Unable to read message {msg_id}. No message provided"}
-            )
-            return
         msg_content = self.parse_message_content(msg_content_element)
+
         if not msg_content:
             self.errors.append({self.error_type: f"Unable to parse JChat message {msg_id}."})
             return
