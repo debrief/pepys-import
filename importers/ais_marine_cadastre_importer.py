@@ -10,12 +10,14 @@ from pepys_import.utils.sqlalchemy_utils import get_lowest_privacy
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 
 
-class AISImporter(Importer):
+class AIS_MarineCadastre_Importer(Importer):
+    """Imports AIS data from https://marinecadastre.gov/ais/"""
+
     def __init__(self):
         super().__init__(
-            name="AIS Format Importer",
+            name="AIS Marine Cadastre Format Importer",
             validation_level=constants.BASIC_LEVEL,
-            short_name="AIS Importer",
+            short_name="AIS Marine Cadastre Importer",
             default_privacy="Public",
             datafile_type="AIS",
         )
