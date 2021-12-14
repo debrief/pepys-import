@@ -539,7 +539,7 @@ class JChatTests(unittest.TestCase):
 
         check_errors_for_file_contents(
             html_string,
-            "Unable to read message 34544=34534. No timestamp provided",
+            "Unable to read message 34544=34534. Not enough parts (expecting timestamp, platform, message)",
             importer,
             "no_timestamp.html",
         )
@@ -590,7 +590,7 @@ class JChatTests(unittest.TestCase):
 
         check_errors_for_file_contents(
             html_string,
-            "Unable to read message 34544=34534. No platform provided",
+            "Unable to read message 34544=34534. Not enough parts (expecting timestamp, platform, message)",
             importer,
             "no_platform.html",
         )
@@ -615,7 +615,7 @@ class JChatTests(unittest.TestCase):
 
         check_errors_for_file_contents(
             html_string,
-            "Unable to read message 34544=34534. No message provided",
+            "Unable to read message 34544=34534. Not enough parts (expecting timestamp, platform, message)",
             importer,
             "no_message",
         )
@@ -640,7 +640,10 @@ class JChatTests(unittest.TestCase):
         importer = JChatImporter()
 
         check_errors_for_file_contents(
-            html_string, "Unable to parse JChat message 34544=34534.", importer, "no_message"
+            html_string,
+            "Unable to read message 34544=34534. Not enough parts (expecting timestamp, platform, message)",
+            importer,
+            "no_message",
         )
 
     @staticmethod

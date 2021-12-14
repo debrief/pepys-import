@@ -140,9 +140,11 @@ class JChatImporter(Importer):
             platform_element = text_blocks[0][1]
             msg_content_element = text_blocks[0][2:]
 
-        if time_element is None:
+        if not text_blocks[0] or len(text_blocks[0]) < 3:
             self.errors.append(
-                {self.error_type: f"Unable to read message {msg_id}. No timestamp provided"}
+                {
+                    self.error_type: f"Unable to read message {msg_id}. Not enough parts (expecting timestamp, platform, message)"
+                }
             )
             return
 
@@ -150,23 +152,13 @@ class JChatImporter(Importer):
         timestamp = self.parse_timestamp(time_string, msg_id)
         time_element.record(self.name, "timestamp", timestamp)
 
-        if platform_element is None:
-            self.errors.append(
-                {self.error_type: f"Unable to read message {msg_id}. No platform provided"}
-            )
-            return
         platform_quad = platform_element.text[0:4]
         platform_element.record(self.name, "platform", platform_quad)
         # Match on quadgraphs
         platform = self.get_cached_platform_from_quad(data_store, platform_quad, change_id)
 
-        if not msg_content_element:
-            self.errors.append(
-                {self.error_type: f"Unable to read message {msg_id}. No message provided"}
-            )
-            return
         msg_content = self.parse_message_content(msg_content_element)
-        print(msg_content)
+
         if not msg_content:
             self.errors.append({self.error_type: f"Unable to parse JChat message {msg_id}."})
             return
