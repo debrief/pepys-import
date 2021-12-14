@@ -573,7 +573,8 @@ class TestWecdisImporter(unittest.TestCase):
             assert stored_states[3].sensor.name == "GPS2"
             assert stored_states[3].sensor.sensor_type.name == "Location-Satellite"
             assert stored_states[3].speed is None
-            assert round(stored_states[3].heading.to(ureg.degree).magnitude, 3) == 199.43
+            # Test that we fall back to 1 if nothing provided for 2
+            assert round(stored_states[3].heading.to(ureg.degree).magnitude, 3) == 201.0
 
             assert stored_states[4].time == datetime(2021, 12, 12, 1, 3, 35, 10000)
             assert stored_states[4].sensor.name == "GPS"

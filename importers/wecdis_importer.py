@@ -34,6 +34,7 @@ class WecdisImporter(Importer):
         )
         self.current_line_no = None
         self.platform_name = None
+        # Potentially multiple sources for speed/heading
         self.platform_speed = {}
         self.platform_heading = {}
         self.timestamp = None
@@ -122,7 +123,7 @@ class WecdisImporter(Importer):
         :param tokens: A tokenised VEL line
         :ptype tokens: Line (list of tokens)
         :param line_number: The line number of the speed"""
-        speed_token = tokens[6]
+        speed_token = tokens[4]  # We're ignoring SPL
         units = unit_registry.knot  # TODO - check whether we can derive units
         if speed_token and speed_token.text:
             speed_valid, speed = convert_speed(
@@ -147,7 +148,6 @@ class WecdisImporter(Importer):
             )
             if heading_valid:
                 key = "1" if tokens[1].text == MsgType.HEADING else tokens[1].text[-1]
-                print(f"Heading index == {key}")
                 self.platform_heading[key] = heading
                 heading_token.record(self.name, "Heading", self.platform_heading)
 
@@ -286,14 +286,21 @@ class WecdisImporter(Importer):
                 speed_token.record(self.name, "speed", speed)
         elif tokens[1].text.startswith("POS"):
             key = "1" if tokens[1].text == MsgType.POSITION else tokens[1].text[-1]
-            print(f"Position index == {key}")
-            print(f"speed: {self.platform_speed}")
-            print(f"hdg: {self.platform_heading}")
             # Speed / heading for POS is taken from the VEL/HDG lines
             if self.platform_speed:
-                state.speed = self.platform_speed[key]
+                try:
+                    state.speed = self.platform_speed[key]
+                except KeyError:
+                    # Fall back to "1" if this position doesn't match
+                    if self.platform_speed["1"]:
+                        state.speed = self.platform_speed["1"]
             if self.platform_heading:
-                state.heading = self.platform_heading[key]
+                try:
+                    state.heading = self.platform_heading[key]
+                except KeyError:
+                    # Fall back to "1" if this position doesn't match
+                    if self.platform_heading["1"]:
+                        state.heading = self.platform_heading["1"]
         if self.elevation:
             state.elevation = self.elevation
 
