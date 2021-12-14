@@ -131,7 +131,6 @@ class WecdisImporter(Importer):
             )
             if speed_valid:
                 key = "1" if tokens[1].text == MsgType.SPEED else tokens[1].text[-1]
-                print(f"Speed index == {key}")
                 self.platform_speed[key] = speed
                 speed_token.record(self.name, "Speed", self.platform_speed)
 
