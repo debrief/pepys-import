@@ -111,7 +111,7 @@ try {
     if (!($env:Path -split ';' -contains $pepys_bin_path)) {
         [Environment]::SetEnvironmentVariable(
             "PATH",
-            [Environment]::GetEnvironmentVariable("PATH", [EnvironmentVariableTarget]::User) + ";" + $pepys_bin_path,
+            $pepys_bin_path + ";" + [Environment]::GetEnvironmentVariable("PATH", [EnvironmentVariableTarget]::User),
             [EnvironmentVariableTarget]::User)
     }
 }
