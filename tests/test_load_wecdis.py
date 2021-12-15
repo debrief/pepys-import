@@ -23,6 +23,9 @@ INVALID_LAT_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/invali
 INVALID_LON_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/invalid_lon.log")
 DEPTH_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/depth.log")
 # INVALID_TTM_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/ttm_invalid.log")
+DATA_MULTI_POS_HDG_VEL_SOURCES_PATH = os.path.join(
+    FILE_PATH, "sample_data/wecdis_files/multiple_pos_hdg_vel_sources.log"
+)
 
 
 class TestWecdisImporter(unittest.TestCase):
@@ -240,21 +243,24 @@ class TestWecdisImporter(unittest.TestCase):
             ureg = UnitRegistry()
             assert states[0].speed is None
             assert states[0].heading is None
-            assert states[0].sensor.sensor_type.name == "GPS"
+            assert states[0].sensor.name == "GPS"
+            assert states[0].sensor.sensor_type.name == "Location-Satellite"
             # CPOS
             assert states[1].time == datetime(2021, 11, 1, 1, 2, 30, 123000)
             assert round(states[1].location.latitude, 6) == -12.57613
             assert round(states[1].location.longitude, 6) == -0.514239
             assert round(states[1].speed.to(ureg.knot).magnitude, 1) == 2.8
             assert states[1].heading.to(ureg.degree).magnitude == 340
-            assert states[1].sensor.sensor_type.name == "ABC_XY"
+            assert states[1].sensor.name == "ABC_XY"
+            assert states[1].sensor.sensor_type.name == "Location-Satellite"
             # POS2
             assert states[2].time == datetime(2021, 11, 1, 1, 2, 30, 123000)
             assert round(states[2].location.latitude, 6) == 12.500054
             assert round(states[2].location.longitude, 6) == 1.170567
             assert states[2].speed is None
             assert states[2].heading is None
-            assert states[2].sensor.sensor_type.name == "SENSOR1"
+            assert states[2].sensor.name == "SENSOR1"
+            assert states[2].sensor.sensor_type.name == "Location-Satellite"
 
     def test_tma_ignore_sol_max(self):
         processor = FileProcessor(archive=False)
@@ -451,12 +457,20 @@ class TestWecdisImporter(unittest.TestCase):
             ureg = UnitRegistry()
 
             assert stored_states[0].time == datetime(2021, 11, 1, 1, 2, 30, 123000)
-            assert stored_states[0].sensor.sensor_type.name == "GPS"
+            assert stored_states[0].sensor.name == "GPS"
+            assert stored_states[0].sensor.sensor_type.name == "Location-Satellite"
+            assert stored_states[0].speed is None
+            assert stored_states[0].heading is None
             assert stored_states[1].time == datetime(2021, 11, 1, 1, 2, 30, 123000)
-            assert stored_states[1].sensor.sensor_type.name == "ABC_XY"
+            assert stored_states[1].sensor.name == "ABC_XY"
+            assert stored_states[1].sensor.sensor_type.name == "Location-Satellite"
             assert stored_states[2].time == datetime(2021, 11, 1, 1, 2, 45, 10000)
+            assert stored_states[2].speed is None
+            assert stored_states[2].heading == 200 * ureg.degree
             assert stored_states[4].time == datetime(2021, 11, 1, 1, 3, 5, 10000)
             assert stored_states[6].time == datetime(2021, 12, 12, 1, 3, 35, 10000)
+            assert round(stored_states[6].speed.to(ureg.knot).magnitude, 3) == 3.08
+            assert round(stored_states[6].heading.to(ureg.degree).magnitude, 3) == 201.2
             assert stored_states[0].elevation.to(ureg.meter).magnitude == -11.1
             assert stored_states[1].elevation.to(ureg.meter).magnitude == -11.1
             assert stored_states[5].elevation.to(ureg.meter).magnitude == -11.1
@@ -487,6 +501,92 @@ class TestWecdisImporter(unittest.TestCase):
             # assert round(stored_contacts[4].bearing.to(ureg.degree).magnitude, 2) == 12.53
             # assert round(stored_contacts[4].range.to(ureg.kilometer).magnitude, 2) == 12.79
             # assert stored_contacts[4].track_number == "TTM_18_b"
+
+    def test_wecdis_multi_pos_sources_sample(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(WecdisImporter())
+
+        # check states empty
+        with self.store.session_scope():
+            # there must be no states at the beginning
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 0)
+            # there must be no contacts at the beginning
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 0)
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 0)
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 0)
+
+        # parse the folder
+        processor.process(DATA_MULTI_POS_HDG_VEL_SOURCES_PATH, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be states after the import
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 6)
+
+            # there must be no contacts after the import
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 0)
+
+            # there must be platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 1)
+
+            # there must be datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 1)
+
+            stored_states = (
+                self.store.session.query(self.store.db_classes.State)
+                .order_by(self.store.db_classes.State.time)
+                .all()
+            )
+            ureg = UnitRegistry()
+
+            assert stored_states[0].time == datetime(2021, 11, 1, 1, 2, 30, 123000)
+            assert stored_states[0].sensor.name == "GPS"
+            assert stored_states[0].sensor.sensor_type.name == "Location-Satellite"
+            assert stored_states[0].speed is None
+            assert stored_states[0].heading is None
+
+            assert stored_states[1].time == datetime(2021, 11, 1, 1, 2, 33, 10000)
+            assert stored_states[1].sensor.name == "GPS"
+            assert stored_states[1].sensor.sensor_type.name == "Location-Satellite"
+            assert stored_states[1].speed is None
+            assert stored_states[1].heading.to(ureg.degree).magnitude == 200
+
+            assert stored_states[2].time == datetime(2021, 11, 1, 1, 3, 5, 10000)
+            assert stored_states[2].sensor.name == "GPS"
+            assert stored_states[2].sensor.sensor_type.name == "Location-Satellite"
+            assert stored_states[2].speed is None
+            assert round(stored_states[2].heading.to(ureg.degree).magnitude, 3) == 201.0
+
+            assert stored_states[3].time == datetime(2021, 11, 1, 1, 3, 5, 10000)
+            assert stored_states[3].sensor.name == "GPS2"
+            assert stored_states[3].sensor.sensor_type.name == "Location-Satellite"
+            assert stored_states[3].speed is None
+            # Test that we fall back to 1 if nothing provided for 2
+            assert round(stored_states[3].heading.to(ureg.degree).magnitude, 3) == 201.0
+
+            assert stored_states[4].time == datetime(2021, 12, 12, 1, 3, 35, 10000)
+            assert stored_states[4].sensor.name == "GPS"
+            assert stored_states[4].sensor.sensor_type.name == "Location-Satellite"
+            assert round(stored_states[4].speed.to(ureg.knot).magnitude, 2) == 3.08
+            assert round(stored_states[4].heading.to(ureg.degree).magnitude, 3) == 201.2
+
+            assert stored_states[5].time == datetime(2021, 12, 12, 1, 3, 35, 10000)
+            assert stored_states[5].sensor.name == "GPS2"
+            assert stored_states[5].sensor.sensor_type.name == "Location-Satellite"
+            assert round(stored_states[5].speed.to(ureg.knot).magnitude, 3) == 6.6
+            assert round(stored_states[5].heading.to(ureg.degree).magnitude, 3) == 199.43
 
     def test_invalid_lat(self):
         processor = FileProcessor(archive=False)

@@ -4,6 +4,7 @@ from enum import Enum
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
+from pepys_import.file.highlighter.level import HighlightLevel
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.file.importer import Importer
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distance, convert_speed
@@ -19,6 +20,8 @@ class MsgType(str, Enum):
     TMA = "TMA"
     DEPTH = "PDS"
     TTM = "TTM"  # Could be TTM1, TTM2, TTM3
+    SPEED = "VEL"
+    HEADING = "HDG"
 
 
 class WecdisImporter(Importer):
@@ -27,12 +30,17 @@ class WecdisImporter(Importer):
             name="WECDIS File Format Importer",
             validation_level=constants.BASIC_LEVEL,
             short_name="WECDIS Importer",
+            default_privacy="Private",
             datafile_type="WECDIS",
         )
         self.current_line_no = None
         self.platform_name = None
+        # Potentially multiple sources for speed/heading
+        self.platform_speed = {}
+        self.platform_heading = {}
         self.timestamp = None
         self.elevation = None
+        self.set_highlighting_level(HighlightLevel.NONE)
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".LOG" or suffix.upper() == ".TXT"
@@ -68,6 +76,10 @@ class WecdisImporter(Importer):
                     self.handle_position(data_store, line_number, tokens, datafile, change_id)
             elif msg_type == MsgType.TMA:
                 self.handle_tma(data_store, line_number, tokens, datafile, change_id)
+            elif MsgType.SPEED in msg_type:
+                self.handle_speed(tokens, line_number)
+            elif MsgType.HEADING in msg_type:
+                self.handle_heading(tokens, line_number)
             # elif MsgType.TTM in msg_type:
             #     self.handle_ttm(data_store, line_number, tokens, datafile, change_id)
         datafile.flush_extracted_tokens()
@@ -106,6 +118,38 @@ class WecdisImporter(Importer):
             if depth_valid:
                 self.elevation = -1 * depth
             depth_token.record(self.name, "Depth", self.elevation)
+
+    def handle_speed(self, tokens, line_number):
+        """Extracts the speed from the VEL line
+        :param tokens: A tokenised VEL line
+        :ptype tokens: Line (list of tokens)
+        :param line_number: The line number of the speed"""
+        speed_token = tokens[4]  # We're ignoring SPL
+        units = unit_registry.knot  # TODO - check whether we can derive units
+        if speed_token and speed_token.text:
+            speed_valid, speed = convert_speed(
+                speed_token.text, units, line_number, self.errors, self.error_type
+            )
+            if speed_valid:
+                key = "1" if tokens[1].text == MsgType.SPEED else tokens[1].text[-1]
+                self.platform_speed[key] = speed
+                speed_token.record(self.name, "Speed", self.platform_speed)
+
+    def handle_heading(self, tokens, line_number):
+        """Extracts the heading from the HDG line
+        :param tokens: A tokenised HDG line
+        :ptype tokens: Line (list of tokens)
+        :param line_number: The line number of the heading being parsed"""
+        heading_token = tokens[2]
+        # TODO - confirm we're always in degs
+        if heading_token and heading_token.text:
+            heading_valid, heading = convert_absolute_angle(
+                heading_token.text, line_number, self.errors, self.error_type
+            )
+            if heading_valid:
+                key = "1" if tokens[1].text == MsgType.HEADING else tokens[1].text[-1]
+                self.platform_heading[key] = heading
+                heading_token.record(self.name, "Heading", self.platform_heading)
 
     def handle_timestamp(self, dza_tokens, line_number):
         """Extracts the important information from a DZA (Timestamp) line
@@ -209,11 +253,15 @@ class WecdisImporter(Importer):
         combine_tokens(source_token, sensor_token).record(self.name, "sensor", sensor_name)
 
         platform = self.get_cached_platform(data_store, self.platform_name, change_id=change_id)
-        sensor = self.get_cached_sensor(
-            data_store=data_store,
-            sensor_name=sensor_name,
-            sensor_type=sensor_token.text,
-            platform_id=platform.platform_id,
+        sensor_type = data_store.add_to_sensor_types("Location-Satellite", change_id=change_id).name
+        sensor = data_store.add_to_sensors(
+            name=sensor_token.text,
+            sensor_type=sensor_type,
+            host_id=platform.platform_id,
+            host_name=None,
+            host_nationality=None,
+            host_identifier=None,
+            privacy=self.default_privacy,
             change_id=change_id,
         )
 
@@ -240,7 +288,23 @@ class WecdisImporter(Importer):
             if speed_valid:
                 state.speed = speed
                 speed_token.record(self.name, "speed", speed)
-
+        elif tokens[1].text.startswith("POS"):
+            key = "1" if tokens[1].text == MsgType.POSITION else tokens[1].text[-1]
+            # Speed / heading for POS is taken from the VEL/HDG lines
+            if self.platform_speed:
+                try:
+                    state.speed = self.platform_speed[key]
+                except KeyError:
+                    # Fall back to "1" if this position doesn't match
+                    if self.platform_speed["1"]:
+                        state.speed = self.platform_speed["1"]
+            if self.platform_heading:
+                try:
+                    state.heading = self.platform_heading[key]
+                except KeyError:
+                    # Fall back to "1" if this position doesn't match
+                    if self.platform_heading["1"]:
+                        state.heading = self.platform_heading["1"]
         if self.elevation:
             state.elevation = self.elevation
 
@@ -288,7 +352,7 @@ class WecdisImporter(Importer):
         detecting_platform = self.get_cached_platform(data_store, self.platform_name, change_id)
         detecting_sensor = self.get_cached_sensor(
             data_store,
-            sensor_name=None,  # Ask, as we don't know where it came from
+            sensor_name=f"{tokens[1].text}-{type_token.text}",  # Ask, as we don't know where it came from
             sensor_type=None,
             platform_id=detecting_platform.platform_id,
             change_id=change_id,
@@ -326,6 +390,10 @@ class WecdisImporter(Importer):
             if course_valid:
                 contact.orientation = course
                 course_token.record(self.name, "course", course)
+
+    # TODO - Extend the Wecdis importer to support TTM once we have a better idea
+    #     of what the TTM format actually is (below is based on MWC's REP parser
+    #     for Wecdis data)
 
     # def handle_ttm(self, data_store, line_number, tokens, datafile, change_id):
     #     """Handles TTM sensor contacts
