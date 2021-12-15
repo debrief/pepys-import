@@ -30,6 +30,7 @@ class WecdisImporter(Importer):
             name="WECDIS File Format Importer",
             validation_level=constants.BASIC_LEVEL,
             short_name="WECDIS Importer",
+            default_privacy="Private",
             datafile_type="WECDIS",
         )
         self.current_line_no = None
@@ -253,10 +254,14 @@ class WecdisImporter(Importer):
 
         platform = self.get_cached_platform(data_store, self.platform_name, change_id=change_id)
         sensor_type = data_store.add_to_sensor_types("Location-Satellite", change_id=change_id).name
-        sensor = platform.get_sensor(
-            data_store=data_store,
-            sensor_name=sensor_token.text,
+        sensor = data_store.add_to_sensors(
+            name=sensor_token.text,
             sensor_type=sensor_type,
+            host_id=platform.platform_id,
+            host_name=None,
+            host_nationality=None,
+            host_identifier=None,
+            privacy=self.default_privacy,
             change_id=change_id,
         )
 
