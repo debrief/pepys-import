@@ -391,6 +391,10 @@ class WecdisImporter(Importer):
                 contact.orientation = course
                 course_token.record(self.name, "course", course)
 
+    # TODO - Extend the Wecdis importer to support TTM once we have a better idea
+    #     of what the TTM format actually is (below is based on MWC's REP parser
+    #     for Wecdis data)
+
     # def handle_ttm(self, data_store, line_number, tokens, datafile, change_id):
     #     """Handles TTM sensor contacts
     #     :param data_store: The data store that this is importing into
