@@ -150,8 +150,8 @@ class FullShoreImporter(Importer):
         state = datafile.create_state(data_store, self.platform, sensor, timestamp, self.short_name)
 
         location = Location(errors=self.errors, error_type=self.error_type)
-        lat_degs = float(lat_token.text) * (180 / math.pi)
-        lon_degs = float(lon_token.text) * (180 / math.pi)
+        lat_degs = math.degrees(float(lat_token.text))
+        lon_degs = math.degrees(float(lon_token.text))
         lat_success = location.set_latitude_decimal_degrees(lat_degs)
         lon_success = location.set_longitude_decimal_degrees(lon_degs)
         if lat_success and lon_success:
@@ -168,8 +168,9 @@ class FullShoreImporter(Importer):
                 height_token.record(self.name, "altitude", state.elevation)
         if course_token.text:
             # TODO - check format of this angle (might be rads)
+            heading_degs = math.degrees(float(course_token.text))
             heading_valid, heading = convert_absolute_angle(
-                course_token.text, line_number, self.errors, self.error_type
+                heading_degs, line_number, self.errors, self.error_type
             )
             if heading_valid:
                 state.heading = heading
@@ -228,9 +229,11 @@ class FullShoreImporter(Importer):
                 contact.elevation = elevation
                 height_token.record(self.name, "altitude", contact.elevation)
         if course_token.text:
+
             # TODO - check format of this angle (might be rads)
+            bearing_degs = math.degrees(float(course_token.text))
             bearing_valid, bearing = convert_absolute_angle(
-                course_token.text, line_number, self.errors, self.error_type
+                bearing_degs, line_number, self.errors, self.error_type
             )
             if bearing_valid:
                 contact.bearing = bearing
