@@ -5,7 +5,7 @@ DROP FUNCTION IF EXISTS PEPYS.DETAILED_STATES_FOR;
 CREATE FUNCTION PEPYS.DETAILED_STATES_FOR(
     INP_START_TIME TEXT,
     INP_END_TIME TEXT,
-    INP_LOCATION TEXT,
+    INP_BOUNDS TEXT,
     INP_SENSOR_ID TEXT[],
     INP_SOURCE_ID TEXT[],
     INP_PLATFORM_ID TEXT[],
@@ -61,7 +61,7 @@ $$
 		(select
 				inp_start_time start_time, --Input should be same as for Phase 1
 				inp_end_time end_time,  --Input should be same as for Phase 1
-				inp_location "location", --Input should be same as for Phase 1
+				inp_bounds bounds, --Input should be same as for Phase 1 
 				inp_sensor_id::text[] sensor_id,  --Input from Phase 2 of import, can be set as null: null as sensor_id
 				inp_source_id::text[] source_id,  --Input from Phase 2 of import, can be set as null: null as source_id
 				inp_platform_id::text[] platform_id,  --Input from Phase 2 of import, can be set as null: null as platform_id
@@ -73,7 +73,7 @@ $$
 		(select
 				case when (trim(ui_input.start_time)='' OR ui_input.start_time is null) then '1000-01-01 00:00:00.000000'::timestamp else to_timestamp(ui_input.start_time, 'YYYY-MM-DD HH24:MI:SS.US') end as start_time,
 				case when (trim(ui_input.end_time)='' OR ui_input.end_time is null) then '9999-12-12 23:59:59.000000'::timestamp else to_timestamp(ui_input.end_time, 'YYYY-MM-DD HH24:MI:SS.US') end as end_time,
-				case when (trim(ui_input.location)='' OR ui_input.location is null) then null else ST_GeomFromText(ui_input.location) end as location,
+				case when (trim(ui_input.bounds)='' OR ui_input.bounds is null) then null else ST_GeomFromText(ui_input.bounds) end as bounds,
 				case when (coalesce(array_length(ui_input.sensor_id,1),0)::int = 0) then null else ui_input.sensor_id end as sensor_id,
 				case when (coalesce(array_length(ui_input.source_id,1),0)::int = 0) then null else ui_input.source_id end as source_id,
 				case when (coalesce(array_length(ui_input.platform_id,1),0)::int = 0) then null else ui_input.platform_id end as platform_id
@@ -163,7 +163,7 @@ $$
 			--Start and End Time criteria from the UI
 			tsrange((select start_time::timestamp from processed_ui_filter_values), (select end_time::timestamp from processed_ui_filter_values), '[]') @> st.time AND
 			--Spatial criteria from the UI
-			((select location from processed_ui_filter_values) is null OR ST_Contains((select location from processed_ui_filter_values),st.location)) AND
+			((select bounds from processed_ui_filter_values) is null OR ST_Contains((select bounds from processed_ui_filter_values),st.location)) AND
 			--Sensor criteria from the UI
 			((select sensor_id from processed_ui_filter_values) is null OR st.sensor_id in (select unnest(sensor_id::uuid[]) from processed_ui_filter_values)) AND
 			--Source criteria from the UI
@@ -230,5 +230,4 @@ LANGUAGE SQL;
 
 
 GRANT EXECUTE ON FUNCTION PEPYS.DETAILED_STATES_FOR TO TRACSTOR_VIEW;
-COMMIT;
-
+COMMIT;s
