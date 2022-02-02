@@ -2,6 +2,19 @@
 History
 =======
 
+0.0.35 (2021-12-16)
+-------------------
+
+* Finalised WECDIS importer (with UX improvements)
+* Support new (VW/21) JChat format
+* Minor improvement to $PATH assignment in `install-Pepys`
+
+0.0.34 (2021-12-07)
+-------------------
+
+* Increase allowed length for track number and platform name
+* Compare local version with master version on launch, add `Update Pepys` application
+* Initial WECDIS importer
 
 0.0.33 (2021-11-29)
 -------------------

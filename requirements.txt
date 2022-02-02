@@ -1,4 +1,4 @@
-SQLAlchemy==1.4.*
+SQLAlchemy==1.4.27
 geoalchemy2>=0.9.4
 psycopg2==2.8.*
 pint==0.14
@@ -30,3 +30,4 @@ Flask-CacheBuster
 flask-cors
 waitress
 lxml
+packaging

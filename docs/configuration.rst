@@ -57,6 +57,13 @@ The specific variables are:
  - :code:`basic_tests`: Path to a folder containing custom basic validation tests to be loaded by pepys-import (default: none)
  - :code:`enhanced_tests`: Path to a folder containing custom enhanced validation tests to be loaded by pepys-import (default: none)
 
+:code:`[network]` section
+#########################
+These settings control which paths Pepys looks for on the network. The specific variables are:
+
+  - :code:`master_install_location`: Path to a folder containing the 'master' install of Pepys. The current Pepys version will be checked against
+    this install, and an error will be given if the master version is newer.
+
 Encryption
 ##########
 Various fields can be specified in an encrypted form (see notes above). To do this,
