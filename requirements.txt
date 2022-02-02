@@ -19,7 +19,7 @@ pandas
 geopandas
 matplotlib
 hvplot
-jupyter
+notebook
 branca
 folium
 mapclassify
