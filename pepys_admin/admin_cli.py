@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 import webbrowser
 from datetime import datetime
@@ -46,6 +47,7 @@ class AdminShell(BaseShell):
 (8) Maintenance
 (9) Maintain tasks
 (10) View dashboard
+(11) Run Jupyter Notebook server
 (.) Exit
 """
     prompt = "(pepys-admin) "
@@ -67,6 +69,7 @@ class AdminShell(BaseShell):
             "8": self.do_maintenance_gui,
             "9": self.do_tasks_gui,
             "10": self.do_view_dashboard,
+            "11": self.do_run_jupyter,
         }
 
         self.cfg = Config(os.path.join(ROOT_DIRECTORY, "alembic.ini"))
@@ -74,6 +77,9 @@ class AdminShell(BaseShell):
         self.cfg.set_main_option("script_location", script_location)
         self.cfg.attributes["database_type"] = data_store.db_type
         self.cfg.attributes["connection"] = data_store.engine
+
+    def do_run_jupyter(self):
+        subprocess.run([sys.executable, "-m", "jupyter", "notebook"], cwd=os.path.expanduser("~"))
 
     def do_view_dashboard(self):
         if self.data_store.db_type == "sqlite":
