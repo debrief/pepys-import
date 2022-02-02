@@ -9,7 +9,7 @@ pytest>=5.3.5
 Sphinx==4.*
 twine==3.*
 nose2
-black
+black==22.1.0
 pre-commit
 sphinx_rtd_theme
 git+https://github.com/tk0miya/testing.postgresql.git#egg=testing.postgresql

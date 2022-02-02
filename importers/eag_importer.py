@@ -217,23 +217,23 @@ class EAGImporter(Importer):
         # Parameters for WGS-84 ellipsoid
         a = 6378137
         b = 6356752.31424518
-        e = math.sqrt((a ** 2 - b ** 2) / (a ** 2))
-        e_dash = math.sqrt((a ** 2 - b ** 2) / (b ** 2))
+        e = math.sqrt((a**2 - b**2) / (a**2))
+        e_dash = math.sqrt((a**2 - b**2) / (b**2))
 
         # Auxilliary values
-        p = math.sqrt(ecef_x ** 2 + ecef_y ** 2)
+        p = math.sqrt(ecef_x**2 + ecef_y**2)
         theta = math.atan((ecef_z * a) / (p * b))
 
         # Calculate longitude from ECEF X and Y as:
         # longitude = arctan(Y / X)
         longitude = math.degrees(math.atan((ecef_y / ecef_x)))
 
-        top_lat_frac = ecef_z + (e_dash ** 2) * b * (math.sin(theta) ** 3)
-        bottom_lat_frac = p - (e ** 2) * a * (math.cos(theta) ** 3)
+        top_lat_frac = ecef_z + (e_dash**2) * b * (math.sin(theta) ** 3)
+        bottom_lat_frac = p - (e**2) * a * (math.cos(theta) ** 3)
 
         latitude = math.degrees(math.atan(top_lat_frac / bottom_lat_frac))
 
-        Ntemp = math.sqrt(1 - (e ** 2) * (math.sin(math.radians(latitude)) ** 2))
+        Ntemp = math.sqrt(1 - (e**2) * (math.sin(math.radians(latitude)) ** 2))
 
         N = a / Ntemp
 
