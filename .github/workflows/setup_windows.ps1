@@ -109,3 +109,8 @@ $DLL = python .\.github\workflows\get_DLL.py | Out-String
 Copy-Item $DLL.Trim() -Destination ".\lib\sqlite-python"
 
 Write-Output "INFO: Copied SQLite pyd file"
+
+
+# Install whl files
+python -m pip install .\bin\GDAL-3.4.1-cp39-cp39-win_amd64.whl
+python -m pip install .\bin\Fiona-1.8.20-cp39-cp39-win_amd64.whl
