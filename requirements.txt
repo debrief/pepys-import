@@ -31,3 +31,4 @@ flask-cors
 waitress
 lxml
 packaging
+ipywidgets
