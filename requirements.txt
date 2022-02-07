@@ -1,7 +1,7 @@
-SQLAlchemy==1.4.27
+SQLAlchemy==1.4.*
 geoalchemy2>=0.9.4
-psycopg2==2.8.*
-pint==0.14
+psycopg2==2.9.*
+pint==0.18
 tabulate>=0.8.7
 pyfiglet>=0.8.post1
 python-dateutil==2.8.*
@@ -16,7 +16,7 @@ pygments>=2.7.4
 geopy>=1.22
 halo>=0.0.31
 loguru
-sqlalchemy-utils==0.37.*
+sqlalchemy-utils==0.38.*
 Flask
 Flask-CacheBuster
 flask-cors
