@@ -361,9 +361,9 @@ class MergeDatabases:
                     for result in results:
                         result.entity = to_id
 
-                # Commit changes
-                self.slave_store.session.add_all(results)
-                self.slave_store.session.commit()
+                    # Commit changes
+                    self.slave_store.session.add_all(results)
+                    self.slave_store.session.commit()
 
     def update_logs_table(self, modified_ids):
         """Updates the Logs table in the slave_store for entries which have had their GUID modified
@@ -392,9 +392,9 @@ class MergeDatabases:
                     for result in results:
                         result.id = to_id
 
-                # Commit changes
-                self.slave_store.session.add_all(results)
-                self.slave_store.session.commit()
+                    # Commit changes
+                    self.slave_store.session.add_all(results)
+                    self.slave_store.session.commit()
 
     @staticmethod
     def split_list(lst, n=100):
