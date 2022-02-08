@@ -2103,6 +2103,40 @@ class TestMergeUpdatePlatformPrivacy(unittest.TestCase):
                 assert len(results) == 1
 
 
+class TestTwoPopulatedDatabasesMerge(unittest.TestCase):
+    def setUp(self):
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
+
+        if os.path.exists("slave.sqlite"):
+            os.remove("slave.sqlite")
+
+        self.master_store = DataStore("", "", "", 0, db_name="master.sqlite", db_type="sqlite")
+        self.master_store.initialise()
+
+        with self.master_store.session_scope():
+            self.master_store.populate_reference()
+            self.master_store.populate_metadata()
+
+        self.slave_store = DataStore("", "", "", 0, db_name="slave.sqlite", db_type="sqlite")
+        self.slave_store.initialise()
+
+        with self.slave_store.session_scope():
+            self.slave_store.populate_reference()
+            self.slave_store.populate_metadata()
+
+    def tearDown(self):
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
+
+        if os.path.exists("slave.sqlite"):
+            os.remove("slave.sqlite")
+
+    def test_two_populated_databases_merge(self):
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+        self.merge_class.merge_all_tables()
+
+
 class TestExportAlterAndMerge(unittest.TestCase):
     @patch("pepys_admin.snapshot_cli.ptk_prompt", return_value="slave_exported.sqlite")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public"])
