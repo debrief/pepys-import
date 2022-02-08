@@ -1,14 +1,11 @@
 pip
 wheel
 bump2version==1.0.*
-watchdog==0.9.0
-flake8==3.*
-tox==3.14.0
-coverage==5.*
+flake8==4.*
+coverage==6.*
 pytest>=5.3.5
 Sphinx==4.*
 twine==3.*
-nose2
 black==22.1.0
 pre-commit
 sphinx_rtd_theme
