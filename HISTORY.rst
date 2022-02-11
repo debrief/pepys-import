@@ -2,6 +2,14 @@
 History
 =======
 
+0.0.36 (2022-02-11)
+-------------------
+
+* Introduce windows binaries to enable Jupyter visualisation
+* Fix bug causing Python to crash on MS-Windows on merge
+* Update dependencies
+
+
 0.0.35 (2021-12-16)
 -------------------
 
