@@ -156,6 +156,10 @@ catch {
 }
 
 try {
+    # Install GDAL and Fiona from wheels
+    .\python\python.exe -m pip install .\bin\GDAL-3.4.1-cp39-cp39-win_amd64.whl
+    .\python\python.exe -m pip install .\bin\Fiona-1.8.20-cp39-cp39-win_amd64.whl
+
     # Do a standard pip install of the requirements and dev requirements, not warning us that scripts will be unavailable
     .\python\python.exe -m pip install -r requirements.txt -r requirements_dev.txt --no-warn-script-location --no-cache-dir --use-deprecated=legacy-resolver
 

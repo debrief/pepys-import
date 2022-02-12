@@ -162,13 +162,14 @@ class DataStore:
         else:
             self.in_memory_database = False
 
-        connection_string = "{}://{}:{}@{}:{}/{}".format(
+        self.connection_string = "{}://{}:{}@{}:{}/{}".format(
             driver, db_username, db_password, db_host, db_port, db_name
         )
+
         try:
             if db_type == "postgres":
                 self.engine = create_engine(
-                    connection_string, echo=False, executemany_mode="batch", future=True
+                    self.connection_string, echo=False, executemany_mode="batch", future=True
                 )
 
                 BasePostGIS.metadata.bind = self.engine
@@ -188,7 +189,7 @@ class DataStore:
                         )
                 self.check_migration_version(POSTGRES_REVISIONS_IDS)
             elif db_type == "sqlite":
-                self.engine = create_engine(connection_string, echo=False, future=True)
+                self.engine = create_engine(self.connection_string, echo=False, future=True)
                 # These 'listen' calls must be the first things run after the engine is created
                 # as they set up things to happen on the first connect (which will happen when
                 # check_migration_version is called below)
@@ -210,7 +211,7 @@ class DataStore:
             sys.exit(1)
 
         # Try to connect to the engine to check if there is any problem
-        with handle_first_connection_error(connection_string):
+        with handle_first_connection_error(self.connection_string):
             inspector = inspect(self.engine)
             _ = inspector.get_table_names()
 
