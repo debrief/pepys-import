@@ -29,6 +29,7 @@ from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.lexers.pygments import PygmentsLexer
 from prompt_toolkit.styles import Style
+from prompt_toolkit.utils import Event
 from prompt_toolkit.widgets.base import Border, Label
 from pygments.lexers.sql import SqlLexer
 from sqlalchemy.orm import Load, undefer
@@ -142,6 +143,8 @@ class MaintenanceGUI:
         )
 
         self.app.dropdown_opened = False
+        self.app.progress_bar_finished = Event(self.app)
+        self.app.preview_table_updated = Event(self.app)
 
     def init_ui_components(self):
         """Initialise all of the UI components, controls, containers and widgets"""
@@ -383,6 +386,7 @@ class MaintenanceGUI:
     def run_query(self):
         """Runs the query as defined by the FilterWidget,
         and displays the result in the preview table."""
+        logger.debug("Running query")
         if self.current_table_object is None:
             return
 
@@ -467,6 +471,11 @@ class MaintenanceGUI:
         # the selected items label
         self.preview_table.current_values = []
         self.update_selected_items_label()
+        app.invalidate()
+
+        logger.debug("Firing preview updated")
+        logger.debug(f"{len(self.table_objects)=}")
+        self.app.preview_table_updated.fire()
 
     def get_table_data(self):
         return self.table_data
@@ -589,6 +598,7 @@ class MaintenanceGUI:
         widget is sensible about this and only raises this event if there has actually been
         a change in the output of the filters property. That means we can run a query
         each time this is called, and the query shouldn't get run more often than is needed."""
+        logger.debug("on filter widget change")
         # Convert the filter object to a SQL string to display in the Complete Query tab
         if value != []:
             filter_query = filter_widget_output_to_query(
@@ -749,7 +759,10 @@ class MaintenanceGUI:
         ensure_future(coroutine())
 
     def run_delete(self):
+        logger.debug("In run_delete")
+
         def do_delete(table_object, ids, set_percentage=None, is_cancelled=None):
+            logger.debug("In do delete")
             with self.data_store.session_scope():
                 change_id = self.data_store.add_to_changes(
                     USER, datetime.utcnow(), "Manual delete from Maintenance GUI"
@@ -760,6 +773,7 @@ class MaintenanceGUI:
         def do_find_dependent_objects(
             table_object, selected_ids, set_percentage=None, is_cancelled=None
         ):
+            logger.debug("In do_find_dep_objs")
             with self.data_store.session_scope():
                 dependent_objects = self.data_store.find_dependent_objects(
                     table_object,
@@ -771,6 +785,7 @@ class MaintenanceGUI:
             return dependent_objects
 
         async def coroutine():
+            logger.debug("In coroutine")
             entries = await self.get_all_selected_entries()
 
             if len(entries) == 0:
@@ -796,14 +811,14 @@ class MaintenanceGUI:
                 selected_items_text = f"{len(entries)} items selected"
 
             selected_ids = convert_objects_to_ids(entries, self.current_table_object)
-
+            logger.debug("Converted objects to IDs")
             dialog = ProgressDialog(
                 "Finding dependent items (may take a while)",
                 partial(do_find_dependent_objects, self.current_table_object, selected_ids),
                 show_cancel=True,
             )
             dependent_objects = await self.show_dialog_as_float(dialog)
-
+            logger.debug("Just awaited find dep objs progress dialog")
             if isinstance(dependent_objects, Exception):
                 await self.show_messagebox_async(
                     "Error",

@@ -1,3 +1,4 @@
+import uuid
 from unittest.mock import Mock
 
 import pytest
@@ -23,6 +24,13 @@ def set_selected_table_to_platform(gui):
     gui.current_table_object = gui.data_store.db_classes.Platform
     gui.get_column_data(gui.current_table_object)
     gui.dropdown_table.text = "Platforms"
+    gui.get_default_preview_fields()
+
+
+def set_selected_table_to_nationality(gui):
+    gui.current_table_object = gui.data_store.db_classes.Nationality
+    gui.get_column_data(gui.current_table_object)
+    gui.dropdown_table.text = "Nationalities"
     gui.get_default_preview_fields()
 
 
@@ -825,3 +833,43 @@ def test_running_query_two_conditions_and(pytestconfig, test_datastore):
     assert gui.table_objects[0] is None
     assert gui.table_objects[1].name == "ADRI"
     assert gui.table_objects[2].name == "JEAN"
+
+
+def test_selecting_all_table_entries(pytestconfig, test_datastore):
+    if pytestconfig.getoption("capture") != "no":
+        pytest.skip("Skipped because pytest was not run with -s option")
+
+    gui = MaintenanceGUI(test_datastore)
+    set_selected_table_to_nationality(gui)
+
+    gui.run_query()
+
+    # Should be 101 entries because of the header line,
+    # plus the 100 results
+    assert len(gui.table_data) == 101
+    assert len(gui.table_objects) == 101
+
+    assert gui.table_data[0] == ["Name", "Priority"]
+    assert gui.table_data[1] == ["Afghanistan", "None"]
+
+    gui.preview_table.current_values = gui.table_objects[1:]
+    gui.preview_table.non_visible_selected = True
+
+    non_vis_entries = gui.get_non_visible_entries_from_database(lambda x: None, lambda x: None)
+    # Should be 256 - 100
+    assert len(non_vis_entries) == 156
+
+    assert isinstance(non_vis_entries[0], uuid.UUID)
+
+    with test_datastore.session_scope():
+        entries = (
+            test_datastore.session.query(test_datastore.db_classes.Nationality)
+            .filter(test_datastore.db_classes.Nationality.nationality_id.in_(non_vis_entries))
+            .all()
+        )
+        names = set([entry.name for entry in entries])
+
+        # Hong Kong is last entry shown in preview table, so shouldn't be in the non-visible items list
+        assert "Hong Kong" not in names
+        # UK is further down the list, so should be in the list
+        assert "United Kingdom" in names

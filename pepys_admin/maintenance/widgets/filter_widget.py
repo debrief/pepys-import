@@ -15,6 +15,7 @@ from pepys_admin.maintenance.widgets.utils import (
 )
 
 CONTEXTUAL_HELP_STRING = "# Second panel: Build filters (F3)"
+from loguru import logger
 
 
 class FilterWidget:
@@ -104,6 +105,8 @@ class FilterWidget:
 
     def trigger_on_change(self, event=None):
         """Triggers the on_change_handler, if it is defined"""
+        logger.debug("trigger on change")
+        logger.debug(f"{self.filters=}")
         if self.on_change_handler is not None:
             if not list_deep_equals(self.filters, self.last_filters_output):
                 # Only call event there is a difference from last time we called
@@ -202,6 +205,7 @@ class FilterWidget:
 
         for entry_or_boolean in entries_and_booleans:
             strings = entry_or_boolean.get_string_values()
+            logger.debug(f"{strings=}")
             if strings[0] == self.column_prompt:
                 # The column dropdown is still at the default value
                 continue
