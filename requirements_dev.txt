@@ -6,7 +6,7 @@ coverage==6.*
 pytest>=5.3.5
 Sphinx==4.*
 twine==3.*
-black==22.1.0
+black==24.3.0
 pre-commit
 sphinx_rtd_theme
 git+https://github.com/tk0miya/testing.postgresql.git#egg=testing.postgresql
